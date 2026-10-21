@@ -1,7 +1,7 @@
 # katana-claude — Design
 
 Date: 2026-10-21
-Status: approved in conversation, pending spec review
+Status: implemented (v0.1.0)
 
 ## Goal
 
@@ -59,7 +59,7 @@ Claude Code ──stdio──▶ katana-mcp (Node 24, TypeScript)
                        KATANA Gen 3
 ```
 
-Repo: `D:\IMPORTRADER\repos\katana-claude`
+Repo layout:
 
 ```
 src/

@@ -1,3 +1,26 @@
+# Dependencies and build output
 node_modules/
 dist/
+
+# Test / coverage output
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local environment
+.env
+.env.*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local agent working files
 .superpowers/
+.claude/
