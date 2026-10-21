@@ -419,8 +419,10 @@ git commit -m "Add in-page agent: index, read, write with UI mirror, status"
   ```ts
   export const SECTIONS: readonly string[]; // ['amp','booster','mod','fx','delay','delay2','reverb','ns','eq','solo','pedalfx','other']
   export const ENUMS: Record<string, readonly string[]>; // keyed by friendly key: 'amp.type','booster.type','mod.type','fx.type','delay.type','delay2.type','reverb.type'
-  export interface Param { key: string; section: string; pid: string; name: string; min: number; max: number; options?: readonly string[]; boolean?: boolean }
+  export const DETAIL_GROUP: Record<string, string>; // MOD/FX type label -> FX_DETAIL group, e.g. 'CHORUS' -> '2x2chorus'
+  export interface Param { key: string; section: string; pid: string; name: string; min: number; max: number; options?: readonly string[]; boolean?: boolean; detailGroup?: string }
   export function buildParams(leaves: Leaf[], colors: number[]): Param[];
+  export function activeOnly(params: Param[], values: Record<string, number>): Param[]; // drops mod/fx detail params of non-active types
   export class CatalogError extends Error { problems: string[] }
   export function resolveChanges(params: Param[], changes: Record<string, unknown>): (WriteChange & { key: string })[]; // throws CatalogError
   export function describe(params: Param[], values: Record<string, number>): Record<string, number | string | boolean>;
@@ -431,7 +433,7 @@ git commit -m "Add in-page agent: index, read, write with UI mirror, status"
 `test/catalog.test.ts`:
 ```ts
 import { describe as group, expect, it } from 'vitest';
-import { buildParams, CatalogError, describe, ENUMS, resolveChanges } from '../src/catalog.js';
+import { activeOnly, buildParams, CatalogError, describe, DETAIL_GROUP, ENUMS, resolveChanges } from '../src/catalog.js';
 import { agentCall, type Leaf } from '../src/page-agent.js';
 import { btsInstalled, createSandbox, readBtsFile } from './bts-sandbox.js';
 
@@ -470,6 +472,22 @@ group.skipIf(!btsInstalled)('catalog', () => {
     expect(keys).toContain('other.chain');
   });
 
+  it('DETAIL_GROUP covers every MOD/FX type and every FX_DETAIL group', () => {
+    expect(Object.keys(DETAIL_GROUP).sort()).toEqual([...ENUMS['mod.type']].sort());
+    const groups = new Set(buildParams(leaves, green).filter(p => p.detailGroup).map(p => p.detailGroup));
+    expect([...groups].sort()).toEqual(Object.values(DETAIL_GROUP).sort());
+  });
+
+  it('activeOnly keeps only the active MOD/FX type details', () => {
+    const p = buildParams(leaves, green);
+    const typePid = p.find(x => x.key === 'mod.type')!.pid;
+    const kept = activeOnly(p, { [typePid]: ENUMS['mod.type'].indexOf('CHORUS') });
+    const modDetails = kept.filter(x => x.section === 'mod' && x.detailGroup);
+    expect(modDetails.length).toBeGreaterThan(0);
+    expect(modDetails.every(x => x.detailGroup === '2x2chorus')).toBe(true);
+    expect(kept.some(x => x.key === 'mod.type')).toBe(true);
+  });
+
   it('enum sizes match the parameter ranges', () => {
     const p = buildParams(leaves, green);
     for (const [key, labels] of Object.entries(ENUMS)) {
@@ -498,6 +516,11 @@ group.skipIf(!btsInstalled)('catalog', () => {
   it('accepts raw PRMID names on the active variation', () => {
     const p = buildParams(leaves, [2, 0, 0, 0, 0]);
     expect(resolveChanges(p, { PRMID_PATCH_BOOSTER_DRIVE: 80 })).toEqual([{ key: 'booster.drive', pid: 'PATCH%BOOSTER(3)%1', value: 80 }]);
+  });
+
+  it('rejects PRMID names shared by several sections as ambiguous', () => {
+    const p = buildParams(leaves, green);
+    expect(() => resolveChanges(p, { PRMID_PATCH_FX_TYPE: 3 })).toThrow('PRMID_PATCH_FX_TYPE: ambiguous, use one of mod.type, fx.type');
   });
 
   it('rejects all invalid changes together, never clamps', () => {
@@ -552,9 +575,19 @@ export const ENUMS: Record<string, readonly string[]> = {
   'reverb.type': REVERB_TYPES,
 };
 
+export const DETAIL_GROUP: Record<string, string> = {
+  'T.WAH': 'twah', 'AUTO WAH': 'awah', 'PEDAL WAH': 'pedalwah', 'COMP': 'comp', 'LIMITER': 'limiter',
+  'GRAPHIC EQ': 'geq', 'PARAMETRIC EQ': 'peq', 'GUITAR SIM': 'guitarsim', 'SLOW GEAR': 'slowgear',
+  'WAVE SYNTH': 'wavesynth', 'OCTAVE': 'octave', 'PITCH SHIFTER': 'pitchshift', 'HARMONIST': 'harmonist',
+  'AC.PROCESSOR': 'acprocess', 'PHASER': 'phaser', 'FLANGER': 'flanger', 'TREMOLO': 'tremolo', 'ROTARY': 'rotary',
+  'UNI-V': 'univ', 'SLICER': 'slicer', 'VIBRATO': 'vibrato', 'RING MOD': 'ringmod', 'HUMANIZER': 'humanizer',
+  'CHORUS': '2x2chorus', 'AC.GUITAR SIM': 'acsim', 'PHASER 90E': 'ephaser', 'FLANGER 117E': 'eflanger',
+  'WAH 95E': 'ewah', 'DC-30': 'dc30', 'HEAVY OCTAVE': 'heavyoctave', 'PEDAL BEND': 'bend',
+};
+
 export interface Param {
   key: string; section: string; pid: string; name: string; min: number; max: number;
-  options?: readonly string[]; boolean?: boolean;
+  options?: readonly string[]; boolean?: boolean; detailGroup?: string;
 }
 
 interface Source { section: string; bid: string; prefix: string; keyPrefix?: string }
@@ -597,16 +630,19 @@ function isBoolean(leaf: Leaf, key: string): boolean {
 
 export function buildParams(leaves: Leaf[], colors: number[]): Param[] {
   const out: Param[] = [];
-  const push = (key: string, section: string, l: Leaf) => {
+  const push = (key: string, section: string, l: Leaf, detailGroup?: string) => {
     const p: Param = { key, section, pid: l.pid, name: l.name, min: l.min, max: l.max };
     if (ENUMS[key]) p.options = ENUMS[key];
     if (isBoolean(l, key)) p.boolean = true;
+    if (detailGroup) p.detailGroup = detailGroup;
     out.push(p);
   };
   for (const s of sources(colors)) {
     for (const l of leaves) {
       if (l.bid !== s.bid || !l.name.startsWith(s.prefix)) continue;
-      push(`${s.section}.${l.name.slice(s.prefix.length).toLowerCase()}`, s.section, l);
+      const rest = l.name.slice(s.prefix.length).toLowerCase();
+      const group = s.prefix === 'PRMID_PATCH_FX_DETAIL_' ? rest.split('_')[0] : undefined;
+      push(`${s.section}.${rest}`, s.section, l, group);
     }
   }
   for (const [key, name] of Object.entries(SWITCHES)) {
@@ -614,6 +650,17 @@ export function buildParams(leaves: Leaf[], colors: number[]): Param[] {
     if (l) push(key, key.split('.')[0], l);
   }
   return out;
+}
+
+/** Drops MOD/FX detail params that belong to a type other than the one currently selected. */
+export function activeOnly(params: Param[], values: Record<string, number>): Param[] {
+  const active: Record<string, string | undefined> = {};
+  for (const section of ['mod', 'fx']) {
+    const t = params.find(p => p.key === `${section}.type`);
+    const label = t && values[t.pid] !== undefined ? ENUMS[t.key][values[t.pid]] : undefined;
+    active[section] = label ? DETAIL_GROUP[label] : undefined;
+  }
+  return params.filter(p => !p.detailGroup || p.detailGroup === active[p.section]);
 }
 
 export class CatalogError extends Error {
@@ -640,9 +687,11 @@ export function resolveChanges(params: Param[], changes: Record<string, unknown>
   const problems: string[] = [];
   const out: (WriteChange & { key: string })[] = [];
   for (const [rawKey, raw] of Object.entries(changes)) {
-    const p = rawKey.startsWith('PRMID_')
-      ? params.find(x => x.name === rawKey)
-      : params.find(x => x.key === rawKey.toLowerCase());
+    const matches = rawKey.startsWith('PRMID_')
+      ? params.filter(x => x.name === rawKey)
+      : params.filter(x => x.key === rawKey.toLowerCase());
+    if (matches.length > 1) { problems.push(`${rawKey}: ambiguous, use one of ${matches.map(m => m.key).join(', ')}`); continue; }
+    const p = matches[0];
     if (!p) { problems.push(`${rawKey}: unknown key`); continue; }
     const value = toNumber(p, raw, problems);
     if (value !== undefined) out.push({ key: p.key, pid: p.pid, value });
@@ -1027,6 +1076,14 @@ describe.skipIf(!btsInstalled)('tools', () => {
     expect(out.warnings[0]).toContain('No KATANA is connected');
   });
 
+  it('get shows only the active MOD type details', async () => {
+    const h = createHandlers({ bts: sandboxBts(), launch: noLaunch });
+    await h.set({ changes: { 'mod.type': 'PHASER' } });
+    const keys = Object.keys(json(await h.get({ sections: ['mod'] })).mod);
+    expect(keys.some(k => k.startsWith('mod.phaser_'))).toBe(true);
+    expect(keys.some(k => k.startsWith('mod.2x2chorus_'))).toBe(false);
+  });
+
   it('list_params shows ranges and options', async () => {
     const h = createHandlers({ bts: sandboxBts(), launch: noLaunch });
     const out = json(await h.listParams({ section: 'reverb' }));
@@ -1056,7 +1113,7 @@ Expected: FAIL — cannot find module `../src/tools.js`.
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod';
 import type { BtsClient } from './bts.js';
-import { buildParams, CatalogError, describe, type Param, resolveChanges, SECTIONS } from './catalog.js';
+import { activeOnly, buildParams, CatalogError, describe, type Param, resolveChanges, SECTIONS } from './catalog.js';
 import { BtsUnavailableError } from './cdp.js';
 import type { LaunchResult } from './launcher.js';
 
@@ -1096,9 +1153,10 @@ export function createHandlers({ bts, launch }: ToolDeps) {
       const { list } = await params();
       const wanted = sections?.length ? list.filter(p => sections.includes(p.section)) : list;
       const values = await bts.read(wanted.map(p => p.pid));
+      const shown = activeOnly(wanted, values); // only the selected MOD/FX type's details
       const out: Record<string, Record<string, unknown>> = {};
-      for (const p of wanted) (out[p.section] ??= {});
-      for (const [k, v] of Object.entries(describe(wanted, values))) out[k.split('.')[0]][k] = v;
+      for (const p of shown) (out[p.section] ??= {});
+      for (const [k, v] of Object.entries(describe(shown, values))) out[k.split('.')[0]][k] = v;
       return ok(out);
     }),
 
@@ -1380,7 +1438,8 @@ Expected: 2 passed.
 With BTS open, run in Claude Code (session started in `D:\IMPORTRADER`):
 1. "volume'ü 12 yap" → VOLUME knob shows 12. Then "volume'ü 50 yap" to restore.
 2. In BTS click the REVERB variation to red. Ask Claude "delay2 time'ı 600 yap". Open DLY2 in BTS: the red DELAY2 shows 600. If instead green or another color changed, change `delay2` in `src/catalog.ts` `sources()` to use `c[3]` (delay color), update the `picks the variation block` test expectation for `delay2.time` accordingly, rerun `npm test`, rebuild.
-3. Restore what you changed.
+3. Ask Claude "MOD tipini PHASER yap". The MOD block in BTS must switch to PHASER and its detail panel must show phaser controls (type selects are `trig` items; confirm the DT1 replay drives them). If the panel does not switch, stop and report; do not work around it silently.
+4. Restore what you changed.
 
 - [ ] **Step 4: Commit**
 
