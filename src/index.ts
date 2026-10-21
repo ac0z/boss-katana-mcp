@@ -5,6 +5,6 @@ import { createCdpBts } from './bts.js';
 import { launch } from './launcher.js';
 import { registerKatanaTools } from './tools.js';
 
-const server = new McpServer({ name: 'katana', version: '0.1.0' });
+const server = new McpServer({ name: 'boss-katana-mcp', version: '0.1.0' });
 registerKatanaTools(server, { bts: createCdpBts(), launch: () => launch() });
 await server.connect(new StdioServerTransport());

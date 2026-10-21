@@ -1,4 +1,4 @@
-# katana-claude
+# boss-katana-mcp
 
 Control a **BOSS KATANA Gen 3** amp from [Claude Code](https://claude.com/claude-code) in plain language.
 
@@ -19,7 +19,8 @@ The project has two parts:
 
 - Windows 10/11
 - BOSS TONE STUDIO for KATANA Gen 3 (tested with 1.1.0), installed in its default location
-- A KATANA Gen 3 amp connected over USB
+- A KATANA Gen 3 amp connected over USB (other KATANA generations use a different BOSS TONE STUDIO app and are
+  not supported)
 - Node.js 24 or newer
 - Claude Code
 
@@ -28,8 +29,8 @@ The project has two parts:
 ### 1. Build
 
 ```powershell
-git clone <repo-url> katana-claude
-cd katana-claude
+git clone <repo-url> boss-katana-mcp
+cd boss-katana-mcp
 npm install
 npm run build
 ```
@@ -39,19 +40,19 @@ npm run build
 ### 2. Open BOSS TONE STUDIO's debug port
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\Enable-KatanaClaude.ps1
+powershell -ExecutionPolicy Bypass -File scripts\Enable-BossKatanaMcp.ps1
 ```
 
 This sets a per-app WebView2 policy (current user only, no admin needed) so BOSS TONE STUDIO opens a DevTools
 debug port on `127.0.0.1:9222` when it starts. Restart BOSS TONE STUDIO if it is already running.
-Read [Security](#security) before enabling it. Undo with `scripts\Disable-KatanaClaude.ps1`.
+Read [Security](#security) before enabling it. Undo with `scripts\Disable-BossKatanaMcp.ps1`.
 
 ### 3. Register the MCP server
 
 Run from the folder where you start Claude Code (local scope), or add `-s user` to make it available everywhere:
 
 ```powershell
-claude mcp add katana -- node C:/path/to/katana-claude/dist/index.js
+claude mcp add katana -- node C:/path/to/boss-katana-mcp/dist/index.js
 ```
 
 Check it with `claude mcp list` — `katana` should show as connected.
@@ -63,7 +64,7 @@ or for your user (`%USERPROFILE%\.claude\skills\katana-tone`). A directory junct
 repo and needs no admin rights:
 
 ```powershell
-New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\katana-tone" -Target "C:\path\to\katana-claude\skill\katana-tone"
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\katana-tone" -Target "C:\path\to\boss-katana-mcp\skill\katana-tone"
 ```
 
 Copying the folder works too. Restart Claude Code so it picks up the skill.
@@ -129,17 +130,17 @@ More detail: [docs/design.md](docs/design.md).
 
 ## Security
 
-`Enable-KatanaClaude.ps1` makes BOSS TONE STUDIO **always** open its DevTools port on `127.0.0.1:9222`, not only
+`Enable-BossKatanaMcp.ps1` makes BOSS TONE STUDIO **always** open its DevTools port on `127.0.0.1:9222`, not only
 while this MCP server is in use. While the app is open, any local process can connect to that port and control
 the app the same way this server does. The port is localhost-only, but 9222 is a common default and may clash
-with other debugging tools. Run `scripts\Disable-KatanaClaude.ps1` (then restart BOSS TONE STUDIO) when you don't
+with other debugging tools. Run `scripts\Disable-BossKatanaMcp.ps1` (then restart BOSS TONE STUDIO) when you don't
 need it.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
-| `BOSS TONE STUDIO is not reachable` | Run `Enable-KatanaClaude.ps1`, then restart BOSS TONE STUDIO (or let `katana_launch` start it) |
+| `BOSS TONE STUDIO is not reachable` | Run `Enable-BossKatanaMcp.ps1`, then restart BOSS TONE STUDIO (or let `katana_launch` start it) |
 | `ampConnected: false` | Check the amp is on and the USB cable is connected, then ask Claude to reconnect (`katana_connect`) |
 | Values look like defaults (`amp.volume 50`, patch `KATANA`) | The amp's patch hasn't loaded yet; wait for `ampConnected: true` |
 | `katana_launch` can't find the app | BOSS TONE STUDIO must be installed in `C:\Program Files (x86)\BOSS\BOSS TONE STUDIO for KATANA Gen 3\` |

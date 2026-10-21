@@ -1,4 +1,4 @@
-# katana-claude — Design
+# boss-katana-mcp — Design
 
 Date: 2026-10-21
 Status: implemented (v0.1.0)
@@ -50,7 +50,7 @@ Observed on BTS for KATANA Gen 3, appVersion 1.1.0, bundle `B_26`:
 ## Architecture
 
 ```
-Claude Code ──stdio──▶ katana-mcp (Node 24, TypeScript)
+Claude Code ──stdio──▶ boss-katana-mcp (Node 24, TypeScript)
                           │ CDP over WebSocket, 127.0.0.1:9222
                           ▼
                      BTS WebView2 page ── window.Parameter / MIDIController
@@ -69,7 +69,7 @@ src/
   tools.ts        MCP tool definitions and handlers
   index.ts        MCP stdio server entry
 skill/katana-tone/SKILL.md   tone knowledge + workflow for Claude
-scripts/                     Enable/Disable-KatanaClaude.ps1 (WebView2 policy), Start-Katana.ps1 (fallback)
+scripts/                     Enable/Disable-BossKatanaMcp.ps1 (WebView2 policy), Start-Katana.ps1 (fallback)
 test/                        vitest unit + opt-in e2e smoke
 ```
 
@@ -157,7 +157,7 @@ HKCU\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments
 ```
 
 Scoped to this exe name only; other WebView2 apps are unaffected. Installed and
-removed by `scripts/Enable-KatanaClaude.ps1` / `scripts/Disable-KatanaClaude.ps1`
+removed by `scripts/Enable-BossKatanaMcp.ps1` / `scripts/Disable-BossKatanaMcp.ps1`
 (no admin: HKCU). The first plan task verifies this works on the real app; if
 it does not, fall back to the launcher below.
 
@@ -174,7 +174,7 @@ asks the user to close and reopen it.
 ## Error handling
 
 - Port closed / no BTS target → "BTS is not running with the debug port; start it
-  with `katana_launch`, or run `scripts/Enable-KatanaClaude.ps1` and reopen BTS".
+  with `katana_launch`, or run `scripts/Enable-BossKatanaMcp.ps1` and reopen BTS".
 - Amp not connected → still allow UI edits, return a warning that the amp did not
   receive them.
 - Unknown key, unknown enum label, out-of-range value → reject with the valid

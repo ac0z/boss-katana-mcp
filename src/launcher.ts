@@ -81,7 +81,7 @@ export async function launch(deps: LaunchDeps = defaultDeps, timeoutMs = 20000):
       return {
         ok: false,
         message: 'BOSS TONE STUDIO is running without the debug port. Close BOSS TONE STUDIO and call katana_launch again ' +
-          '(or run scripts/Enable-KatanaClaude.ps1 once so it always opens with the port).',
+          '(or run scripts/Enable-BossKatanaMcp.ps1 once so it always opens with the port).',
       };
     }
     // Running with the port already open: skip start() and just wait for page scripts to load below.

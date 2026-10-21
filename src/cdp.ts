@@ -4,7 +4,7 @@ export class BtsUnavailableError extends Error {}
 
 const NOT_RUNNING =
   'BOSS TONE STUDIO is not reachable on the debug port. Open it with katana_launch, ' +
-  'or run scripts/Enable-KatanaClaude.ps1 once and reopen BOSS TONE STUDIO.';
+  'or run scripts/Enable-BossKatanaMcp.ps1 once and reopen BOSS TONE STUDIO.';
 
 export function pickTarget(list: CdpTarget[]): CdpTarget | undefined {
   return list.find(t => t.type === 'page' && t.url.startsWith('file:///') && t.url.endsWith('/html/index.html'));

@@ -1,9 +1,9 @@
 {
-  "name": "katana-claude",
+  "name": "boss-katana-mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "katana-mcp": "dist/index.js" },
+  "bin": { "boss-katana-mcp": "dist/index.js" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
