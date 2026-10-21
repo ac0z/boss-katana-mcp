@@ -34,18 +34,30 @@ export async function evaluateInBts<T>(expression: string, port = 9222): Promise
       ws.addEventListener('error', () => reject(new BtsUnavailableError(NOT_RUNNING)), { once: true });
     });
     return await new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('CDP evaluate timed out')), 10000);
-      ws.addEventListener('message', ev => {
+      const settle = (fn: () => void) => {
+        clearTimeout(timer);
+        ws.removeEventListener('message', onMessage);
+        ws.removeEventListener('close', onClose);
+        ws.removeEventListener('error', onClose);
+        fn();
+      };
+      const timer = setTimeout(() => settle(() => reject(new Error('CDP evaluate timed out'))), 10000);
+      const onClose = () => settle(() => reject(new BtsUnavailableError('BOSS TONE STUDIO closed the DevTools connection before replying.')));
+      const onMessage = (ev: MessageEvent) => {
         const msg = JSON.parse(String(ev.data));
         if (msg.id !== 1) return;
-        clearTimeout(timer);
-        if (msg.error) return reject(new Error(`CDP error: ${msg.error.message}`));
-        const r = msg.result;
-        if (r.exceptionDetails) {
-          return reject(new Error(`BTS page error: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}`));
-        }
-        resolve(r.result.value as T);
-      });
+        settle(() => {
+          if (msg.error) return reject(new Error(`CDP error: ${msg.error.message}`));
+          const r = msg.result;
+          if (r.exceptionDetails) {
+            return reject(new Error(`BTS page error: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}`));
+          }
+          resolve(r.result.value as T);
+        });
+      };
+      ws.addEventListener('message', onMessage);
+      ws.addEventListener('close', onClose, { once: true });
+      ws.addEventListener('error', onClose, { once: true });
       ws.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, returnByValue: true, awaitPromise: true } }));
     });
   } finally {
