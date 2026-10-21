@@ -69,7 +69,7 @@ src/
   tools.ts        MCP tool definitions and handlers
   index.ts        MCP stdio server entry
 skill/katana-tone/SKILL.md   tone knowledge + workflow for Claude
-scripts/Start-Katana.ps1     launcher with debug port
+scripts/                     Enable/Disable-KatanaClaude.ps1 (WebView2 policy), Start-Katana.ps1 (fallback)
 test/                        vitest unit + opt-in e2e smoke
 ```
 
@@ -127,6 +127,7 @@ in `common/editor.js` / `ktn_mk2_model.js`).
 | Tool | Input | Output |
 |---|---|---|
 | `katana_status` | — | app reachable, amp connected, patch name, active colors |
+| `katana_launch` | — | starts BTS if not running, waits for CDP target |
 | `katana_get` | optional `blocks[]` | current tone in friendly keys with enum labels |
 | `katana_set` | `{ changes: { key: value } }` | applied values (read back) + warnings |
 | `katana_list_params` | `block` | keys, ranges, enum options for that block |
@@ -142,15 +143,38 @@ nothing is written (all-or-nothing at validation level).
   reverb starting points per genre) and the KATANA type lists.
 - Relative requests ("biraz daha parlak") are applied relative to `katana_get`.
 
-### scripts/Start-Katana.ps1
-Sets `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222` for the
-child process only and starts the BTS exe. Optional desktop shortcut creation.
-If BTS is already running without the port, tell the user to close it first.
+### Enabling the debug port on the original app
+
+The MCP works with the original, unmodified BTS install. The user keeps opening
+BTS the usual way (Start menu, desktop shortcut).
+
+Primary: per-app WebView2 policy (the BTS loader reads
+`Software\Policies\Microsoft\Edge\WebView2\`, string seen in the exe):
+
+```
+HKCU\Software\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments
+  "BOSS TONE STUDIO for KATANA Gen 3.exe" = "--remote-debugging-port=9222"
+```
+
+Scoped to this exe name only; other WebView2 apps are unaffected. Installed and
+removed by `scripts/Enable-KatanaClaude.ps1` / `scripts/Disable-KatanaClaude.ps1`
+(no admin: HKCU). The first plan task verifies this works on the real app; if
+it does not, fall back to the launcher below.
+
+Fallback: `scripts/Start-Katana.ps1` sets
+`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222` for the
+child process only and starts the BTS exe.
+
+### katana_launch tool
+If BTS is not running, starts the original exe (port comes from the policy, or
+from the env var when using the fallback) and waits until the BTS CDP target
+appears. If BTS is running but the port is closed, it does not kill the app; it
+asks the user to close and reopen it.
 
 ## Error handling
 
 - Port closed / no BTS target → "BTS is not running with the debug port; start it
-  with Start-Katana.ps1".
+  with `katana_launch`, or run `scripts/Enable-KatanaClaude.ps1` and reopen BTS".
 - Amp not connected → still allow UI edits, return a warning that the amp did not
   receive them.
 - Unknown key, unknown enum label, out-of-range value → reject with the valid
