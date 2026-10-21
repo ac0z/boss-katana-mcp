@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { isImageListed, launch, type LaunchDeps } from '../src/launcher.js';
 
 function deps(o: Partial<LaunchDeps>): LaunchDeps {
-  return { isRunning: async () => false, start: vi.fn(), reachable: async () => false, sleep: async () => {}, ...o };
+  return { exists: () => true, isRunning: async () => false, start: vi.fn(), reachable: async () => false, sleep: async () => {}, ...o };
 }
 
 const IMAGE = 'BOSS TONE STUDIO for KATANA Gen 3.exe';
@@ -70,4 +70,20 @@ it('times out at a non-multiple timeout without over-sleeping', async () => {
   expect(r.ok).toBe(false);
   expect(totalSlept).toBeLessThanOrEqual(700);
   expect(r.message).toContain('0.7s');
+});
+
+it('reports ok:false without starting when the exe is missing', async () => {
+  const d = deps({ exists: () => false });
+  const r = await launch(d);
+  expect(r).toEqual({
+    ok: false,
+    message: 'BOSS TONE STUDIO was not found at C:\\Program Files (x86)\\BOSS\\BOSS TONE STUDIO for KATANA Gen 3\\BOSS TONE STUDIO for KATANA Gen 3.exe. Install it or check the path.',
+  });
+  expect(d.start).not.toHaveBeenCalled();
+});
+
+it('reports ok:false with the error message when start() throws', async () => {
+  const d = deps({ start: () => { throw new Error('access denied'); } });
+  const r = await launch(d);
+  expect(r).toEqual({ ok: false, message: 'Could not start BOSS TONE STUDIO: access denied' });
 });

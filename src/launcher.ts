@@ -1,11 +1,13 @@
 import { execFile, spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
-import { btsReachable } from './cdp.js';
+import { evaluateInBts } from './cdp.js';
 
 export const BTS_EXE = 'C:\\Program Files (x86)\\BOSS\\BOSS TONE STUDIO for KATANA Gen 3\\BOSS TONE STUDIO for KATANA Gen 3.exe';
 const IMAGE = 'BOSS TONE STUDIO for KATANA Gen 3.exe';
 
 export interface LaunchDeps {
+  exists(): boolean;
   isRunning(): Promise<boolean>;
   start(): void;
   reachable(): Promise<boolean>;
@@ -30,6 +32,7 @@ export function isImageListed(csvStdout: string, image: string): boolean {
 }
 
 const defaultDeps: LaunchDeps = {
+  exists: () => existsSync(BTS_EXE),
   async isRunning() {
     const { stdout } = await promisify(execFile)('tasklist', ['/FI', `IMAGENAME eq ${IMAGE}`, '/FO', 'CSV', '/NH']);
     return isImageListed(stdout, IMAGE);
@@ -37,9 +40,18 @@ const defaultDeps: LaunchDeps = {
   start() {
     // The env var is a fallback for machines where the per-app policy is not installed.
     const env = { ...process.env, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--remote-debugging-port=9222' };
-    spawn(BTS_EXE, [], { detached: true, stdio: 'ignore', env }).unref();
+    const child = spawn(BTS_EXE, [], { detached: true, stdio: 'ignore', env });
+    child.on('error', () => {}); // avoid an unhandled 'error' event crashing the MCP process
+    child.unref();
   },
-  reachable: () => btsReachable(),
+  reachable: async () => {
+    // Readiness means the page scripts are loaded, not just that the socket accepts a connection.
+    try {
+      return await evaluateInBts<boolean>('typeof Parameter !== "undefined" && typeof AddressMap !== "undefined"');
+    } catch {
+      return false;
+    }
+  },
   sleep: ms => new Promise(r => setTimeout(r, ms)),
 };
 
@@ -58,7 +70,14 @@ export async function launch(deps: LaunchDeps = defaultDeps, timeoutMs = 20000):
         '(or run scripts/Enable-KatanaClaude.ps1 once so it always opens with the port).',
     };
   }
-  deps.start();
+  if (!deps.exists()) {
+    return { ok: false, message: `BOSS TONE STUDIO was not found at ${BTS_EXE}. Install it or check the path.` };
+  }
+  try {
+    deps.start();
+  } catch (err) {
+    return { ok: false, message: `Could not start BOSS TONE STUDIO: ${(err as Error).message}` };
+  }
   const step = 500;
   for (let elapsed = 0; elapsed < timeoutMs; ) {
     const toSleep = Math.min(step, timeoutMs - elapsed);
