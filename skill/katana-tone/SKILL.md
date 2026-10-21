@@ -12,7 +12,8 @@ Tools: `katana_status`, `katana_launch`, `katana_get`, `katana_set`, `katana_lis
    After `katana_launch`, wait until `katana_status` reports `ampConnected: true` before trusting any `katana_get`
    values: BTS loads the connected amp's actual patch only after that, and until then `katana_get` returns stale
    defaults (e.g. `amp.volume: 50`, patch name `"KATANA"`) rather than what the amp holds. If `ampConnected` is still
-   `false`, say so and only continue (edit the cold/default patch) if the user asks to.
+   `false`, call `katana_status` again, up to ~5 times a few seconds apart. If it is still `false` after that, tell
+   the user no amp is connected and ask before continuing (editing the cold/default patch).
 2. `katana_get` (all sections, or the ones you will touch).
 3. Decide the change. Relative requests ("biraz daha", "less gain") are relative to step 2's values.
    Need a detail parameter (chorus rate, harmonist interval, ...)? `katana_list_params` for that section first.
@@ -27,8 +28,8 @@ Tools: `katana_status`, `katana_launch`, `katana_get`, `katana_set`, `katana_lis
 - Keep volume changes moderate unless asked; never jump `amp.volume` by more than 20 in one step without the user asking.
 - `*.high_cut`, `*.low_cut`, `*_freq`, `*_q`, `reverb.density`, `other.chain`, `other.cabinet_resonance`,
   `other.master_key`, `eq.type`, `eq.position`, `pedalfx.type` are list indexes (a position into a fixed option
-  list), not Hz or ms values. Check `katana_list_params` for that section's actual range/options before setting one,
-  and avoid touching them unless the request needs it.
+  list), not Hz or ms values. `katana_list_params` gives only the min/max index for those params, not the option
+  labels, so prefer leaving them unchanged unless the user specifically asks to change one.
 
 ## Section keys
 amp (type, gain, volume, bass, middle, treble, presence, resonance, preamp_variation, poweramp_variation) ·
@@ -49,10 +50,10 @@ pedalfx · other (chain, cabinet_resonance, master_key)
 ## Starting points (then adjust by ear with the user)
 | Style | Amp | Gain | B/M/T | Booster | Mod/FX | Delay | Reverb |
 |---|---|---|---|---|---|---|---|
-| Clean jazz | CLEAN | 20 | 60/50/35 | off | off | off | ROOM, reverb.effect_level 25 |
-| Funk clean | CLEAN | 30 | 45/55/65 | off | COMP | off | ROOM, reverb.effect_level 15 |
-| Blues | CRUNCH | 45 | 55/60/50 | BLUES DRIVE drive 40 | off | ANALOG, delay.time 350, delay.feedback 20, delay.effect_level 25 | SPRING, reverb.effect_level 30 |
-| Classic rock | CRUNCH | 60 | 55/60/60 | T-SCREAM drive 30 | off | ANALOG, delay.time 400, delay.effect_level 20 | ROOM, reverb.effect_level 25 |
-| 80s hard rock lead | LEAD | 70 | 55/55/65 | T-SCREAM drive 20, tone +10 | CHORUS light | DIGITAL, delay.time 450, delay.feedback 30, delay.effect_level 30 | HALL, reverb.effect_level 35 |
-| Modern metal rhythm | BROWN | 75 | 60/40/60 | T-SCREAM drive 0, level high | off | off | ROOM, reverb.effect_level 10, ns.sw on, ns.threshold 40 |
-| Ambient | CLEAN | 25 | 50/50/55 | off | CHORUS | DIGITAL, delay.time 600, delay.feedback 50, delay.effect_level 40 + delay2 REVERSE | HALL, reverb.effect_level 60 |
+| Clean jazz | CLEAN | 20 | 60/50/35 | off | off | off | reverb.type ROOM, reverb.effect_level 25 |
+| Funk clean | CLEAN | 30 | 45/55/65 | off | mod.type COMP | off | reverb.type ROOM, reverb.effect_level 15 |
+| Blues | CRUNCH | 45 | 55/60/50 | booster.type BLUES DRIVE, booster.drive 40 | off | delay.type ANALOG, delay.time 350, delay.feedback 20, delay.effect_level 25 | reverb.type SPRING, reverb.effect_level 30 |
+| Classic rock | CRUNCH | 60 | 55/60/60 | booster.type T-SCREAM, booster.drive 30 | off | delay.type ANALOG, delay.time 400, delay.effect_level 20 | reverb.type ROOM, reverb.effect_level 25 |
+| 80s hard rock lead | LEAD | 70 | 55/55/65 | booster.type T-SCREAM, booster.drive 20, booster.tone 10 | mod.type CHORUS, defaults | delay.type DIGITAL, delay.time 450, delay.feedback 30, delay.effect_level 30 | reverb.type HALL, reverb.effect_level 35 |
+| Modern metal rhythm | BROWN | 75 | 60/40/60 | booster.type T-SCREAM, booster.drive 0, booster.effect_level 80 | off | off | reverb.type ROOM, reverb.effect_level 10, ns.sw on, ns.threshold 40 |
+| Ambient | CLEAN | 25 | 50/50/55 | off | mod.type CHORUS | delay.type DIGITAL, delay.time 600, delay.feedback 50, delay.effect_level 40, delay2.on true, delay2.type REVERSE | reverb.type HALL, reverb.effect_level 60 |
