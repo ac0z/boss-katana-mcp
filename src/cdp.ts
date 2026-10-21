@@ -10,6 +10,11 @@ export function pickTarget(list: CdpTarget[]): CdpTarget | undefined {
   return list.find(t => t.type === 'page' && t.url.startsWith('file:///') && t.url.endsWith('/html/index.html'));
 }
 
+/** True when `url` is a DevTools websocket endpoint on this machine's own debug port. */
+export function isLocalDebuggerUrl(url: string, port: number): boolean {
+  return url.startsWith(`ws://127.0.0.1:${port}/`);
+}
+
 async function listTargets(port: number): Promise<CdpTarget[]> {
   try {
     const res = await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(2000) });
@@ -27,11 +32,18 @@ export async function btsReachable(port = 9222): Promise<boolean> {
 export async function evaluateInBts<T>(expression: string, port = 9222): Promise<T> {
   const target = pickTarget(await listTargets(port));
   if (!target?.webSocketDebuggerUrl) throw new BtsUnavailableError(NOT_RUNNING);
+  if (!isLocalDebuggerUrl(target.webSocketDebuggerUrl, port)) {
+    throw new BtsUnavailableError(`Unexpected DevTools endpoint: ${target.webSocketDebuggerUrl}`);
+  }
   const ws = new WebSocket(target.webSocketDebuggerUrl);
   try {
     await new Promise<void>((resolve, reject) => {
-      ws.addEventListener('open', () => resolve(), { once: true });
-      ws.addEventListener('error', () => reject(new BtsUnavailableError(NOT_RUNNING)), { once: true });
+      const timer = setTimeout(() => {
+        ws.close();
+        reject(new BtsUnavailableError(NOT_RUNNING));
+      }, 5000);
+      ws.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
+      ws.addEventListener('error', () => { clearTimeout(timer); reject(new BtsUnavailableError(NOT_RUNNING)); }, { once: true });
     });
     return await new Promise<T>((resolve, reject) => {
       const settle = (fn: () => void) => {
