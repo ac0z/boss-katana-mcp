@@ -3,12 +3,28 @@ export interface AgentStatus { connected: boolean; patchName: string; colors: nu
 export interface WriteChange { pid: string; value: number }
 
 /**
+ * FNV-1a 32-bit hash, hex-encoded. Used to derive PAGE_AGENT_SOURCE's version tag from its own
+ * body, so a page already holding an older build's agent gets replaced instead of kept.
+ */
+function fnv1aHex(str: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
  * Runs inside the BTS WebView page (plain ES5-ish JS, no imports).
  * Uses BTS globals: AddressMap, Parameter, $native, _7bitize, hex2, STX, ROLAND, DT1, EOX,
  * ProductSetting, INTEGER* size constants, currentMIDIConnect.
+ *
+ * `__KATANA_CLAUDE_AGENT_VERSION__` is a placeholder substituted below with a hash of this
+ * body, so the IIFE's guard rejects (and replaces) any agent left by a different build.
  */
-export const PAGE_AGENT_SOURCE = String.raw`(function () {
-  if (window.__katanaClaude && window.__katanaClaude.v === 1) return;
+const AGENT_BODY = String.raw`(function () {
+  if (window.__katanaClaude && window.__katanaClaude.v === __KATANA_CLAUDE_AGENT_VERSION__) return;
   var leaves = null, byPid = {};
 
   function bytesOf(size) {
@@ -74,8 +90,11 @@ export const PAGE_AGENT_SOURCE = String.raw`(function () {
     return { connected: window.currentMIDIConnect != null, patchName: name, colors: colors };
   }
 
-  window.__katanaClaude = { v: 1, index: index, read: read, write: write, status: status };
+  window.__katanaClaude = { v: __KATANA_CLAUDE_AGENT_VERSION__, index: index, read: read, write: write, status: status };
 })();`;
+
+const AGENT_VERSION = JSON.stringify(fnv1aHex(AGENT_BODY));
+export const PAGE_AGENT_SOURCE = AGENT_BODY.replace(/__KATANA_CLAUDE_AGENT_VERSION__/g, AGENT_VERSION);
 
 export function agentCall(method: 'index' | 'read' | 'write' | 'status', arg?: unknown): string {
   const args = arg === undefined ? '' : JSON.stringify(arg);

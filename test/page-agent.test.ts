@@ -11,6 +11,13 @@ describe.skipIf(!btsInstalled)('page agent', () => {
     expect(sb.run('window.__katanaClaude.marker')).toBe(1);
   });
 
+  it('replaces a stale page agent left by an older version', () => {
+    const sb = createSandbox();
+    sb.run("window.__katanaClaude = { v: 'old' }");
+    sb.run(PAGE_AGENT_SOURCE);
+    expect(sb.run('typeof window.__katanaClaude.index')).toBe('function');
+  });
+
   it('indexes PATCH leaves with byte offsets as pid suffix', () => {
     const sb = createSandbox();
     const leaves = sb.run<Leaf[]>(agentCall('index'));
@@ -44,6 +51,25 @@ describe.skipIf(!btsInstalled)('page agent', () => {
     ]));
     expect(out).toEqual({ 'PATCH%DELAY(1)%1': 1234, 'PATCH%REVERB(1)%2': 75 });
     expect(sb.run('Parameter.paramSet["PATCH%DELAY(1)"].slice(1, 5).join("")')).toBe('00040D02');
+  });
+
+  it.each([
+    ['PATCH%DELAY(1)%1', 1234], // 4-byte value
+    ['PATCH%REVERB(1)%2', 75], // negative ofs
+  ] as const)('mirrors to the UI exactly the DT1 frame queued for the amp (%s)', (pid, value) => {
+    const sb = createSandbox();
+    // Wrap the real MIDIController-installed handler so the UI-mirror frame is captured too.
+    sb.run(
+      'globalThis.__mirrored = []; ' +
+      'var __orig = $native.midi.event.message; ' +
+      '$native.midi.event.message = function (m, t) { globalThis.__mirrored.push(m); return __orig(m, t); };',
+    );
+    sb.run(agentCall('write', [{ pid, value }]));
+    const mirrored = sb.run<string[]>('globalThis.__mirrored');
+    expect(mirrored).toHaveLength(1);
+    sb.tick(); // drains MIDIController's queue into sb.sent
+    expect(sb.sent).toHaveLength(1);
+    expect(mirrored[0]).toBe(sb.sent[0]);
   });
 
   it('reports status', () => {

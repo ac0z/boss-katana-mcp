@@ -20,18 +20,22 @@ export interface Sandbox {
   run<T = unknown>(code: string): T;
   incoming(msg: string): void;
   sent: string[];
+  /** Invokes MIDIController's own setInterval(timerproc) callback once, draining one queued message into `sent`. */
+  tick(): void;
 }
 
 /** Loads BTS's own parameter/MIDI scripts into an isolated vm context, like the WebView page. */
 export function createSandbox(): Sandbox {
   const sent: string[] = [];
+  let intervalCallback: (() => void) | undefined;
   const midi = {
     event: {} as { message?: (msg: string, ts: number) => void },
     send: (msg: string) => { sent.push(msg); },
   };
   const win: Record<string, unknown> = {
     console, setTimeout,
-    setInterval: () => 0, // keep MIDIController's queue from draining
+    // Stores the callback instead of invoking it, so MIDIController's queue only drains on tick().
+    setInterval: (fn: () => void) => { intervalCallback = fn; return 0; },
     navigator: { language: 'en' },
     $native: { midi },
   };
@@ -42,6 +46,7 @@ export function createSandbox(): Sandbox {
     run: <T>(code: string) => vm.runInContext(code, ctx) as T,
     incoming: (msg: string) => midi.event.message!(msg, 0),
     sent,
+    tick: () => intervalCallback?.(),
   };
 }
 
