@@ -1,9 +1,31 @@
 import { expect, it, vi } from 'vitest';
-import { launch, type LaunchDeps } from '../src/launcher.js';
+import { isImageListed, launch, type LaunchDeps } from '../src/launcher.js';
 
 function deps(o: Partial<LaunchDeps>): LaunchDeps {
   return { isRunning: async () => false, start: vi.fn(), reachable: async () => false, sleep: async () => {}, ...o };
 }
+
+const IMAGE = 'BOSS TONE STUDIO for KATANA Gen 3.exe';
+
+it('isImageListed matches the full CSV image name case-insensitively', () => {
+  const csv = '"BOSS TONE STUDIO for KATANA Gen 3.exe","6888","Console","1","28,612 K"';
+  expect(isImageListed(csv, IMAGE)).toBe(true);
+  expect(isImageListed(csv.toLowerCase(), IMAGE)).toBe(true);
+});
+
+it('isImageListed returns false for the "no tasks" INFO line', () => {
+  expect(isImageListed('INFO: No tasks are running which match the specified criteria.', IMAGE)).toBe(false);
+});
+
+it('isImageListed returns false for a different image', () => {
+  const csv = '"notepad.exe","1234","Console","1","1,000 K"';
+  expect(isImageListed(csv, IMAGE)).toBe(false);
+});
+
+it('isImageListed returns false for a TABLE-style truncated name', () => {
+  const table = 'BOSS TONE STUDIO for KATA     6888 Console                    1     28,612 K';
+  expect(isImageListed(table, IMAGE)).toBe(false);
+});
 
 it('does nothing when BTS is already reachable', async () => {
   const d = deps({ reachable: async () => true });
@@ -31,4 +53,21 @@ it('times out when the page never appears', async () => {
   const r = await launch(d, 1000);
   expect(r.ok).toBe(false);
   expect(r.message).toContain('did not become reachable');
+});
+
+it('does not throw out of launch when tasklist (isRunning) fails', async () => {
+  const d = deps({ isRunning: async () => { throw new Error('tasklist failed'); } });
+  const r = await launch(d);
+  expect(r.ok).toBe(false);
+  // isRunning failing is treated as "not running", so launch proceeds to start().
+  expect(d.start).toHaveBeenCalled();
+});
+
+it('times out at a non-multiple timeout without over-sleeping', async () => {
+  let totalSlept = 0;
+  const d = deps({ sleep: async (ms: number) => { totalSlept += ms; } });
+  const r = await launch(d, 700);
+  expect(r.ok).toBe(false);
+  expect(totalSlept).toBeLessThanOrEqual(700);
+  expect(r.message).toContain('0.7s');
 });
