@@ -18,7 +18,10 @@ describe.skipIf(process.env.KATANA_E2E !== '1')('live BOSS TONE STUDIO', () => {
       expect(json(await h.set({ changes: { 'amp.volume': next } })).applied['amp.volume']).toBe(next);
       expect(json(await h.get({ sections: ['amp'] })).amp['amp.volume']).toBe(next);
     } finally {
-      await h.set({ changes: { 'amp.volume': before } });
+      const restore = await h.set({ changes: { 'amp.volume': before } });
+      expect(restore.isError).not.toBe(true);
+      expect(json(restore).applied['amp.volume']).toBe(before);
+      expect(json(await h.get({ sections: ['amp'] })).amp['amp.volume']).toBe(before);
     }
   });
 });
