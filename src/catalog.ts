@@ -1,6 +1,6 @@
 import type { Leaf, WriteChange } from './page-agent.js';
 
-export const SECTIONS = ['amp', 'booster', 'mod', 'fx', 'delay', 'delay2', 'reverb', 'ns', 'eq', 'solo', 'pedalfx', 'other'] as const;
+export const SECTIONS = ['amp', 'booster', 'mod', 'fx', 'delay', 'delay2', 'reverb', 'ns', 'eq', 'eq2', 'solo', 'pedalfx', 'other'] as const;
 
 const AMP_TYPES = ['ACOUSTIC', 'CLEAN', 'PUSHED', 'CRUNCH', 'LEAD', 'BROWN'];
 const BOOSTER_TYPES = ['MID BOOST', 'CLEAN BOOST', 'TREBLE BOOST', 'CRUNCH OD', 'NATURAL OD', 'WARM OD', 'FAT DS', 'METAL DS', 'OCT FUZZ', 'BLUES DRIVE', 'OVERDRIVE', 'T-SCREAM', 'TURBO OD', 'DISTORTION', 'RAT', 'GUV DS', 'DST+', 'METAL ZONE', "'60S FUZZ", 'MUFF FUZZ', 'HM-2', 'METAL CORE', 'CENTA OD'];
@@ -33,7 +33,7 @@ export interface Param {
   options?: readonly string[]; boolean?: boolean; detailGroup?: string;
 }
 
-interface Source { section: string; bid: string; prefix: string; keyPrefix?: string }
+interface Source { section: string; bid: string; prefix: string }
 
 // colors: PATCH%COLOR offsets 0 booster, 1 mod, 2 fx, 3 delay, 4 reverb (0..2 = green/red/yellow)
 function sources(c: number[]): Source[] {
@@ -51,7 +51,12 @@ function sources(c: number[]): Source[] {
     { section: 'eq', bid: 'PATCH%EQ_EACH(1)', prefix: 'PRMID_PATCH_EQ_EACH_' },
     { section: 'eq', bid: 'PATCH%EQ_PEQ(1)', prefix: 'PRMID_PATCH_EQ_' },
     { section: 'eq', bid: 'PATCH%EQ_GE10(1)', prefix: 'PRMID_PATCH_EQ_' },
+    { section: 'eq2', bid: 'PATCH%EQ_EACH(2)', prefix: 'PRMID_PATCH_EQ_EACH_' },
+    { section: 'eq2', bid: 'PATCH%EQ_PEQ(2)', prefix: 'PRMID_PATCH_EQ_' },
+    { section: 'eq2', bid: 'PATCH%EQ_GE10(2)', prefix: 'PRMID_PATCH_EQ_' },
     { section: 'solo', bid: 'PATCH%SOLO_COM', prefix: 'PRMID_PATCH_SOLO_COM_' },
+    { section: 'solo', bid: 'PATCH%SOLO_EQ', prefix: 'PRMID_PATCH_SOLO_' },
+    { section: 'solo', bid: 'PATCH%SOLO_DELAY', prefix: 'PRMID_PATCH_SOLO_' },
     { section: 'pedalfx', bid: 'PATCH%PEDALFX_COM', prefix: 'PRMID_PATCH_PEDALFX_COM_' },
     { section: 'pedalfx', bid: 'PATCH%PEDALFX', prefix: 'PRMID_PATCH_PEDALFX_' },
     { section: 'other', bid: 'PATCH%OTHER', prefix: 'PRMID_PATCH_OTHER_' },

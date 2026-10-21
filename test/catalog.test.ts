@@ -54,6 +54,37 @@ group.skipIf(!btsInstalled)('catalog', () => {
     expect(kept.some(x => x.key === 'mod.type')).toBe(true);
   });
 
+  it('activeOnly keeps only the active FX type details', () => {
+    const p = buildParams(leaves, green);
+    const typePid = p.find(x => x.key === 'fx.type')!.pid;
+    const kept = activeOnly(p, { [typePid]: ENUMS['fx.type'].indexOf('HARMONIST') });
+    const fxDetails = kept.filter(x => x.section === 'fx' && x.detailGroup);
+    expect(fxDetails.length).toBeGreaterThan(0);
+    expect(fxDetails.every(x => x.detailGroup === 'harmonist')).toBe(true);
+    expect(kept.some(x => x.key === 'fx.type')).toBe(true);
+  });
+
+  it('solo section covers SOLO_EQ and SOLO_DELAY detail blocks', () => {
+    const p = buildParams(leaves, green);
+    expect(p.find(x => x.key === 'solo.eq_low_gain')).toMatchObject({ pid: 'PATCH%SOLO_EQ%3' });
+    expect(p.find(x => x.key === 'solo.eq_sw')).toMatchObject({ pid: 'PATCH%SOLO_EQ%1', boolean: true });
+    expect(p.find(x => x.key === 'solo.delay_time')).toMatchObject({ pid: 'PATCH%SOLO_DELAY%2' });
+    expect(p.find(x => x.key === 'solo.delay_sw')).toMatchObject({ pid: 'PATCH%SOLO_DELAY%0', boolean: true });
+    // PATCH%SOLO_COM keys are unaffected by the SOLO_EQ/SOLO_DELAY prefix
+    expect(p.find(x => x.key === 'solo.sw')).toMatchObject({ pid: 'PATCH%SOLO_COM%0' });
+    expect(p.find(x => x.key === 'solo.effect_level')).toMatchObject({ pid: 'PATCH%SOLO_COM%1' });
+  });
+
+  it('eq2 mirrors eq on instance 2 of EQ_EACH/EQ_PEQ/EQ_GE10', () => {
+    const p = buildParams(leaves, green);
+    const eq = p.find(x => x.key === 'eq.peq_low_gain')!;
+    const eq2 = p.find(x => x.key === 'eq2.peq_low_gain')!;
+    expect(eq.pid.startsWith('PATCH%EQ_PEQ(1)%')).toBe(true);
+    expect(eq2.pid.startsWith('PATCH%EQ_PEQ(2)%')).toBe(true);
+    expect(p.find(x => x.key === 'eq2.type')).toBeDefined();
+    expect(p.find(x => x.key === 'eq2.ge10_31hz')!.pid.startsWith('PATCH%EQ_GE10(2)%')).toBe(true);
+  });
+
   it('enum sizes match the parameter ranges', () => {
     const p = buildParams(leaves, green);
     for (const [key, labels] of Object.entries(ENUMS)) {
@@ -87,6 +118,17 @@ group.skipIf(!btsInstalled)('catalog', () => {
   it('rejects PRMID names shared by several sections as ambiguous', () => {
     const p = buildParams(leaves, green);
     expect(() => resolveChanges(p, { PRMID_PATCH_FX_TYPE: 3 })).toThrow('PRMID_PATCH_FX_TYPE: ambiguous, use one of mod.type, fx.type');
+  });
+
+  it('rejects the raw EQ_PEQ PRMID name as ambiguous between eq and eq2', () => {
+    const p = buildParams(leaves, green);
+    expect(() => resolveChanges(p, { PRMID_PATCH_EQ_PEQ_LOW_GAIN: 1 }))
+      .toThrow('PRMID_PATCH_EQ_PEQ_LOW_GAIN: ambiguous, use one of eq.peq_low_gain, eq2.peq_low_gain');
+  });
+
+  it('has no duplicate friendly keys across all params', () => {
+    const keys = buildParams(leaves, green).map(x => x.key);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it('rejects all invalid changes together, never clamps', () => {
