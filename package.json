@@ -1,0 +1,22 @@
+{
+  "name": "katana-claude",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "katana-mcp": "dist/index.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "powershell -NoProfile -Command \"$env:KATANA_E2E='1'; npx vitest run test/e2e.test.ts\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  },
+  "engines": { "node": ">=24" }
+}
