@@ -53,6 +53,16 @@ describe.skipIf(!btsInstalled)('page agent', () => {
     expect(sb.run('Parameter.paramSet["PATCH%DELAY(1)"].slice(1, 5).join("")')).toBe('00040D02');
   });
 
+  it('flashes the BTS loading popup after a write so the change is noticeable', async () => {
+    const sb = createSandbox();
+    sb.run('globalThis.__popup = []; window.btsDOMController = { openLoading: () => __popup.push("open"), closeLoading: () => __popup.push("close") }');
+    sb.run(agentCall('write', [{ pid: 'PATCH%AMP%1', value: 12 }]));
+    sb.run(agentCall('write', [{ pid: 'PATCH%AMP%1', value: 13 }])); // still showing: keeps it open longer
+    expect(sb.run('__popup.join()')).toBe('open');
+    await new Promise(r => setTimeout(r, 1000));
+    expect(sb.run('__popup.join()')).toBe('open,close');
+  });
+
   it.each([
     ['PATCH%DELAY(1)%1', 1234], // 4-byte value
     ['PATCH%REVERB(1)%2', 75], // negative ofs

@@ -77,12 +77,23 @@ const AGENT_BODY = String.raw`(function () {
     $native.midi.event.message(msg, 0);
   }
 
+  // Briefly shows BTS's own loading popup so a remote edit is noticeable on screen. The amp has
+  // no command for a panel animation; this is the closest visible cue.
+  var FLASH_MS = 700, flashTimer = null;
+  function flash() {
+    if (!window.btsDOMController) return;
+    if (flashTimer === null) btsDOMController.openLoading();
+    else clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { flashTimer = null; btsDOMController.closeLoading(); }, FLASH_MS);
+  }
+
   function write(changes) {
     var ls = changes.map(function (c) { return leafOf(c.pid); });
     changes.forEach(function (c, i) {
       Parameter.setValue(c.pid, ls[i].size, ls[i].ofs, c.value); // DT1 to the amp
       mirrorToUi(ls[i]);
     });
+    flash();
     return read(changes.map(function (c) { return c.pid; }));
   }
 

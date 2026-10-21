@@ -33,7 +33,7 @@ export function createSandbox(): Sandbox {
     send: (msg: string) => { sent.push(msg); },
   };
   const win: Record<string, unknown> = {
-    console, setTimeout,
+    console, setTimeout, clearTimeout,
     // Stores the callback instead of invoking it, so MIDIController's queue only drains on tick().
     setInterval: (fn: () => void) => { intervalCallback = fn; return 0; },
     navigator: { language: 'en' },
