@@ -3,9 +3,15 @@ import * as z from 'zod';
 import type { BtsClient } from './bts.js';
 import { activeOnly, buildParams, CatalogError, describe, type Param, resolveChanges, SECTIONS } from './catalog.js';
 import { BtsUnavailableError } from './cdp.js';
+import { connectAndWait, type ConnectResult } from './connect.js';
 import type { LaunchResult } from './launcher.js';
 
-export interface ToolDeps { bts: BtsClient; launch(): Promise<LaunchResult> }
+export interface ToolDeps {
+  bts: BtsClient;
+  launch(): Promise<LaunchResult>;
+  /** Defaults to connectAndWait(bts). */
+  connect?(): Promise<ConnectResult>;
+}
 export type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
 const ok = (obj: unknown): ToolResult => ({ content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] });
@@ -19,7 +25,7 @@ async function guard(fn: () => Promise<ToolResult>): Promise<ToolResult> {
   }
 }
 
-export function createHandlers({ bts, launch }: ToolDeps) {
+export function createHandlers({ bts, launch, connect = () => connectAndWait(bts) }: ToolDeps) {
   async function params(): Promise<{ list: Param[]; connected: boolean; patchName: string; colors: number[] }> {
     const st = await bts.status();
     return { list: buildParams(await bts.index(), st.colors), ...st };
@@ -67,8 +73,11 @@ export function createHandlers({ bts, launch }: ToolDeps) {
 
     launch: () => guard(async () => {
       const r = await launch();
-      return r.ok ? ok(r) : fail(r.message);
+      if (!r.ok) return fail(r.message);
+      return ok({ ...r, ...(await connect()) });
     }),
+
+    connect: () => guard(async () => ok(await connect())),
   };
 }
 
@@ -81,8 +90,13 @@ export function registerKatanaTools(server: McpServer, deps: ToolDeps): void {
   }, () => h.status());
 
   server.registerTool('katana_launch', {
-    description: 'Open BOSS TONE STUDIO with the debug port if it is not open yet, and wait until it is reachable.',
+    description: 'Open BOSS TONE STUDIO with the debug port if it is not open yet, connect it to the KATANA ' +
+      '(answers the "Connect with" dialog) and wait until the amp patch is loaded.',
   }, () => h.launch());
+
+  server.registerTool('katana_connect', {
+    description: 'Connect an already open BOSS TONE STUDIO to the KATANA (e.g. after the amp was switched off and on) and wait until the amp patch is loaded.',
+  }, () => h.connect());
 
   server.registerTool('katana_get', {
     description: 'Read the current tone from BOSS TONE STUDIO as friendly keys (amp.volume, booster.type, ...). Effects show the active variation.',

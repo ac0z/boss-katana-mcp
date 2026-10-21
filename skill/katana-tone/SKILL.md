@@ -5,15 +5,15 @@ description: Use when the user describes a guitar tone or asks to change BOSS KA
 
 # KATANA tone
 
-Tools: `katana_status`, `katana_launch`, `katana_get`, `katana_set`, `katana_list_params` (MCP server `katana`).
+Tools: `katana_status`, `katana_launch`, `katana_connect`, `katana_get`, `katana_set`, `katana_list_params` (MCP server `katana`).
 
 ## Workflow
-1. `katana_status`. If it errors as not reachable → `katana_launch`, then `katana_status` again.
-   After `katana_launch`, wait until `katana_status` reports `ampConnected: true` before trusting any `katana_get`
-   values: BTS loads the connected amp's actual patch only after that, and until then `katana_get` returns stale
-   defaults (e.g. `amp.volume: 50`, patch name `"KATANA"`) rather than what the amp holds. If `ampConnected` is still
-   `false`, call `katana_status` again, up to ~5 times a few seconds apart. If it is still `false` after that, tell
-   the user no amp is connected and ask before continuing (editing the cold/default patch).
+1. `katana_status`. If it errors as not reachable → `katana_launch`. If it reports `ampConnected: false` →
+   `katana_connect`. Both answer BTS's "Connect with" dialog themselves and return only once the amp's patch is
+   loaded, with `ampConnected` and `patchName`.
+   Trust `katana_get` values only when `ampConnected` is `true`: until then BTS shows stale defaults (e.g.
+   `amp.volume: 50`, patch name `"KATANA"`) rather than what the amp holds. If it comes back `false`, tell the user
+   its `message` (e.g. amp off / USB unplugged) and ask before continuing (editing the cold/default patch).
 2. `katana_get` (all sections, or the ones you will touch).
 3. Decide the change. Relative requests ("biraz daha", "less gain") are relative to step 2's values.
    Need a detail parameter (chorus rate, harmonist interval, ...)? `katana_list_params` for that section first.

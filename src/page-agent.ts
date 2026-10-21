@@ -1,6 +1,7 @@
 export interface Leaf { bid: string; pid: string; name: string; size: number; ofs: number; min: number; max: number }
 export interface AgentStatus { connected: boolean; patchName: string; colors: number[] }
 export interface WriteChange { pid: string; value: number }
+export interface ConnectStart { started: boolean; already?: boolean; pending?: boolean; device?: string; reason?: string }
 
 /**
  * FNV-1a 32-bit hash, hex-encoded. Used to derive PAGE_AGENT_SOURCE's version tag from its own
@@ -18,7 +19,8 @@ function fnv1aHex(str: string): string {
 /**
  * Runs inside the BTS WebView page (plain ES5-ish JS, no imports).
  * Uses BTS globals: AddressMap, Parameter, $native, _7bitize, hex2, STX, ROLAND, DT1, EOX,
- * ProductSetting, INTEGER* size constants, currentMIDIConnect.
+ * ProductSetting, INTEGER* size constants, currentMIDIConnect, and for connect(): $ (jQuery), util, midiConnectionController,
+ * btsDOMController, popup_close.
  *
  * `__KATANA_CLAUDE_AGENT_VERSION__` is a placeholder substituted below with a hash of this
  * body, so the IIFE's guard rejects (and replaces) any agent left by a different build.
@@ -90,13 +92,43 @@ const AGENT_BODY = String.raw`(function () {
     return { connected: window.currentMIDIConnect != null, patchName: name, colors: colors };
   }
 
-  window.__katanaClaude = { v: __KATANA_CLAUDE_AGENT_VERSION__, index: index, read: read, write: write, status: status };
+  // Dialogs BTS opens to pick a MIDI device; connecting replaces whichever is up.
+  var CONNECT_DIALOGS = ['device-connect-select-dialog', 'disconnected-midi-connect-dialog',
+    'connection-err-midi-connect-dialog', 'device-err-midi-connect-dialog', 'device-not-found-dialog'];
+
+  // Does what the "Connect with" dialog's OK does, for the single KATANA input. BTS clears its
+  // stored device whenever the link drops, so after that it asks on every start.
+  // Returns pending while BTS is still starting up or a connect (its own or ours) is under way:
+  // connectMIDI stores the device first and disconnectMIDI clears it if the handshake fails.
+  function connect() {
+    if (window.currentMIDIConnect != null) return { started: false, already: true };
+    var asking = CONNECT_DIALOGS.some(function (id) { return $('#' + id).is(':visible'); });
+    if (!asking && (!midiConnectionController.getHasInitialized() || util.readStorage().input != null)) {
+      return { started: false, pending: true };
+    }
+    midiConnectionController.setInputs($native.midi.input.endpoints());
+    midiConnectionController.setOutputs($native.midi.output.endpoints());
+    var katanas = midiConnectionController.getInputs().filter(function (e) { return /^KATANA/.test(e.MIDIDeviceNameKey); });
+    if (katanas.length !== 1) {
+      return { started: false, reason: katanas.length ? 'More than one KATANA MIDI device is listed; pick one in BOSS TONE STUDIO.' : 'No KATANA MIDI device is listed. Is the amp on and connected over USB?' };
+    }
+    if (midiConnectionController._getMatchedOutput(katanas[0]) === null) {
+      return { started: false, reason: 'The KATANA MIDI input has no matching output.' };
+    }
+    CONNECT_DIALOGS.forEach(function (id) { popup_close(id); });
+    btsDOMController.closeConnectingPage();
+    midiConnectionController.updateHasInitialized();
+    midiConnectionController.connectMIDI(katanas[0]);
+    return { started: true, device: katanas[0].MIDIDeviceNameKey };
+  }
+
+  window.__katanaClaude = { v: __KATANA_CLAUDE_AGENT_VERSION__, index: index, read: read, write: write, status: status, connect: connect };
 })();`;
 
 const AGENT_VERSION = JSON.stringify(fnv1aHex(AGENT_BODY));
 export const PAGE_AGENT_SOURCE = AGENT_BODY.replace(/__KATANA_CLAUDE_AGENT_VERSION__/g, AGENT_VERSION);
 
-export function agentCall(method: 'index' | 'read' | 'write' | 'status', arg?: unknown): string {
+export function agentCall(method: 'index' | 'read' | 'write' | 'status' | 'connect', arg?: unknown): string {
   const args = arg === undefined ? '' : JSON.stringify(arg);
   return `${PAGE_AGENT_SOURCE}\nwindow.__katanaClaude.${method}(${args})`;
 }

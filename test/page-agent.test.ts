@@ -77,3 +77,73 @@ describe.skipIf(!btsInstalled)('page agent', () => {
     expect(sb.run(agentCall('status'))).toEqual({ connected: false, patchName: 'KATANA', colors: [0, 0, 0, 0, 0] });
   });
 });
+
+/** Stubs the BTS connect globals the sandbox does not load (jQuery DOM, util storage, controllers). */
+function connectSandbox(o: { visible?: string[]; initialized?: boolean; stored?: boolean; inputs?: string[] } = {}) {
+  const sb = createSandbox();
+  const names = o.inputs ?? ['KATANA3'];
+  sb.run(`
+    globalThis.__calls = [];
+    var __visible = ${JSON.stringify(o.visible ?? ['device-connect-select-dialog'])};
+    var __eps = ${JSON.stringify(names)}.map(function (n) { return { MIDIDeviceNameKey: n, MIDIEntityNameKey: n, MIDIEndpointUIDKey: n + '-uid' }; });
+    $native.midi.input = { endpoints: function () { return __eps; } };
+    $native.midi.output = { endpoints: function () { return __eps; } };
+    window.$ = function (sel) { return { is: function () { return __visible.indexOf(sel.slice(1)) >= 0; } }; };
+    window.util = { readStorage: function () { return { input: ${o.stored ? '{}' : 'null'} }; } };
+    window.popup_close = function (id) { __calls.push('close ' + id); };
+    window.btsDOMController = { closeConnectingPage: function () { __calls.push('closeConnectingPage'); } };
+    var __inputs = [];
+    window.midiConnectionController = {
+      setInputs: function (v) { __inputs = v; }, setOutputs: function () {}, getInputs: function () { return __inputs; },
+      getHasInitialized: function () { return ${o.initialized ?? false}; },
+      updateHasInitialized: function () { __calls.push('updateHasInitialized'); },
+      _getMatchedOutput: function (i) { return i; },
+      connectMIDI: function (i) { __calls.push('connectMIDI ' + i.MIDIEndpointUIDKey); },
+    };`);
+  return sb;
+}
+
+describe.skipIf(!btsInstalled)('page agent connect', () => {
+  it('answers the "Connect with" dialog like its OK button, with the KATANA input', () => {
+    const sb = connectSandbox();
+    expect(sb.run(agentCall('connect'))).toEqual({ started: true, device: 'KATANA3' });
+    const calls = sb.run<string[]>('__calls');
+    expect(calls).toContain('close device-connect-select-dialog');
+    expect(calls.slice(-3)).toEqual(['closeConnectingPage', 'updateHasInitialized', 'connectMIDI KATANA3-uid']);
+  });
+
+  it('does nothing when the amp is already connected', () => {
+    const sb = connectSandbox();
+    sb.run('window.currentMIDIConnect = {}');
+    expect(sb.run(agentCall('connect'))).toEqual({ started: false, already: true });
+    expect(sb.run('__calls')).toEqual([]);
+  });
+
+  it.each([
+    ['BTS has not finished starting up', { visible: [], initialized: false }],
+    ['a connect is already under way', { visible: [], initialized: true, stored: true }],
+  ])('waits when %s', (_, o) => {
+    const sb = connectSandbox(o);
+    expect(sb.run(agentCall('connect'))).toEqual({ started: false, pending: true });
+    expect(sb.run('__calls')).toEqual([]);
+  });
+
+  it('connects after the user picked offline mode (initialized, nothing stored, no dialog)', () => {
+    const sb = connectSandbox({ visible: [], initialized: true });
+    expect(sb.run(agentCall('connect'))).toMatchObject({ started: true });
+  });
+
+  it('connects from the "disconnected" dialog even with a stale stored device', () => {
+    const sb = connectSandbox({ visible: ['disconnected-midi-connect-dialog'], initialized: true, stored: true });
+    expect(sb.run(agentCall('connect'))).toMatchObject({ started: true });
+  });
+
+  it.each([
+    [[], 'No KATANA MIDI device is listed'],
+    [['KATANA3', 'KATANA3 (2)'], 'More than one KATANA'],
+  ])('leaves the dialog to the user when the inputs are %j', (inputs, reason) => {
+    const sb = connectSandbox({ inputs: ['Microsoft GS Wavetable Synth', ...inputs] });
+    expect(sb.run<{ reason: string }>(agentCall('connect')).reason).toContain(reason);
+    expect(sb.run('__calls')).toEqual([]);
+  });
+});

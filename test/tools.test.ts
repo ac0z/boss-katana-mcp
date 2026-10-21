@@ -15,6 +15,7 @@ function sandboxBts(connected = true): BtsClient & { sb: ReturnType<typeof creat
     index: async () => sb.run<Leaf[]>(agentCall('index')),
     read: async (pids: string[]) => sb.run(agentCall('read', pids)),
     write: async (c: WriteChange[]) => sb.run(agentCall('write', c)),
+    connect: async () => ({ started: false, already: true }),
   };
 }
 const json = (r: { content: { text: string }[] }) => JSON.parse(r.content[0].text);
@@ -69,9 +70,27 @@ describe.skipIf(!btsInstalled)('tools', () => {
   it('turns BtsUnavailableError into a readable tool error', async () => {
     const down: BtsClient = {
       status: async () => { throw new BtsUnavailableError('BOSS TONE STUDIO is not reachable'); },
-      index: async () => [], read: async () => ({}), write: async () => ({}),
+      index: async () => [], read: async () => ({}), write: async () => ({}), connect: async () => ({ started: false }),
     };
     const r = await createHandlers({ bts: down, launch: noLaunch }).status();
     expect(r).toEqual({ isError: true, content: [{ type: 'text', text: 'BOSS TONE STUDIO is not reachable' }] });
+  });
+
+  it('launch connects the amp and reports it', async () => {
+    const h = createHandlers({
+      bts: sandboxBts(), launch: async () => ({ ok: true, message: 'BOSS TONE STUDIO started.' }),
+      connect: async () => ({ ampConnected: true, patchName: 'DELI' }),
+    });
+    expect(json(await h.launch())).toEqual({ ok: true, message: 'BOSS TONE STUDIO started.', ampConnected: true, patchName: 'DELI' });
+  });
+
+  it('launch does not try to connect when BTS could not be opened', async () => {
+    let tried = false;
+    const h = createHandlers({
+      bts: sandboxBts(), launch: async () => ({ ok: false, message: 'not found' }),
+      connect: async () => { tried = true; return { ampConnected: false, patchName: '' }; },
+    });
+    expect((await h.launch()).isError).toBe(true);
+    expect(tried).toBe(false);
   });
 });

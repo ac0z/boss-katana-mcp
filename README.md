@@ -14,6 +14,10 @@ The MCP connects to BOSS TONE STUDIO's page over CDP (127.0.0.1:9222), sets valu
 (which sends SysEx DT1 to the amp) and replays the same DT1 into the app's MIDI-in handler so the knobs redraw.
 Edits stay in the amp's edit buffer until you press WRITE.
 
+BOSS TONE STUDIO forgets the amp whenever the MIDI link drops, then asks "Choose a device to connect with" on every
+start. `katana_launch` and `katana_connect` answer that dialog the way its OK button does (only when exactly one
+KATANA MIDI device is listed) and wait until the amp's patch is loaded.
+
 ## Security
 `scripts/Enable-KatanaClaude.ps1` sets a per-app WebView2 policy, so BOSS TONE STUDIO always opens its DevTools debug
 port on `127.0.0.1:9222` — not just while this MCP server is attached. While BOSS TONE STUDIO is open, any local
