@@ -1,7 +1,7 @@
 import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
-import { evaluateInBts } from './cdp.js';
+import { btsReachable, evaluateInBts } from './cdp.js';
 
 export const BTS_EXE = 'C:\\Program Files (x86)\\BOSS\\BOSS TONE STUDIO for KATANA Gen 3\\BOSS TONE STUDIO for KATANA Gen 3.exe';
 const IMAGE = 'BOSS TONE STUDIO for KATANA Gen 3.exe';
@@ -11,7 +11,11 @@ export interface LaunchDeps {
   isRunning(): Promise<boolean>;
   start(): void;
   reachable(): Promise<boolean>;
+  /** True when BTS's DevTools debug port answers, even if page scripts haven't loaded yet. */
+  portOpen(): Promise<boolean>;
   sleep(ms: number): Promise<void>;
+  /** Wall clock, for tracking the timeout budget. Defaults to `Date.now`; tests can inject their own. */
+  now?(): number;
 }
 export interface LaunchResult { ok: boolean; message: string }
 
@@ -52,10 +56,13 @@ const defaultDeps: LaunchDeps = {
       return false;
     }
   },
+  portOpen: () => btsReachable(),
   sleep: ms => new Promise(r => setTimeout(r, ms)),
 };
 
 export async function launch(deps: LaunchDeps = defaultDeps, timeoutMs = 20000): Promise<LaunchResult> {
+  const now = deps.now ?? Date.now;
+  const start = now();
   if (await deps.reachable()) return { ok: true, message: 'BOSS TONE STUDIO is already open and reachable.' };
   let isRunning: boolean;
   try {
@@ -64,26 +71,51 @@ export async function launch(deps: LaunchDeps = defaultDeps, timeoutMs = 20000):
     isRunning = false;
   }
   if (isRunning) {
-    return {
-      ok: false,
-      message: 'BOSS TONE STUDIO is running without the debug port. Close BOSS TONE STUDIO and call katana_launch again ' +
-        '(or run scripts/Enable-KatanaClaude.ps1 once so it always opens with the port).',
-    };
-  }
-  if (!deps.exists()) {
-    return { ok: false, message: `BOSS TONE STUDIO was not found at ${BTS_EXE}. Install it or check the path.` };
-  }
-  try {
-    deps.start();
-  } catch (err) {
-    return { ok: false, message: `Could not start BOSS TONE STUDIO: ${(err as Error).message}` };
+    let portIsOpen: boolean;
+    try {
+      portIsOpen = await deps.portOpen();
+    } catch {
+      portIsOpen = false;
+    }
+    if (!portIsOpen) {
+      return {
+        ok: false,
+        message: 'BOSS TONE STUDIO is running without the debug port. Close BOSS TONE STUDIO and call katana_launch again ' +
+          '(or run scripts/Enable-KatanaClaude.ps1 once so it always opens with the port).',
+      };
+    }
+    // Running with the port already open: skip start() and just wait for page scripts to load below.
+  } else {
+    if (!deps.exists()) {
+      return { ok: false, message: `BOSS TONE STUDIO was not found at ${BTS_EXE}. Install it or check the path.` };
+    }
+    try {
+      deps.start();
+    } catch (err) {
+      return { ok: false, message: `Could not start BOSS TONE STUDIO: ${(err as Error).message}` };
+    }
   }
   const step = 500;
-  for (let elapsed = 0; elapsed < timeoutMs; ) {
+  // Elapsed starts from real time already spent before the loop (the initial reachable()
+  // check, isRunning(), portOpen()) and is then topped up each iteration by the nominal sleep
+  // plus the real time reachable() itself takes, so a slow dependency can't let the loop run
+  // far past timeoutMs in wall-clock terms, while fast/instant deps (as in tests) behave exactly
+  // like a simple step counter.
+  for (let elapsed = now() - start; elapsed < timeoutMs; ) {
     const toSleep = Math.min(step, timeoutMs - elapsed);
     await deps.sleep(toSleep);
     elapsed += toSleep;
-    if (await deps.reachable()) return { ok: true, message: 'BOSS TONE STUDIO started.' };
+    const before = now();
+    const ready = await deps.reachable();
+    elapsed += now() - before;
+    if (ready) {
+      return { ok: true, message: isRunning ? 'BOSS TONE STUDIO is open and ready.' : 'BOSS TONE STUDIO started.' };
+    }
   }
-  return { ok: false, message: `BOSS TONE STUDIO was started but did not become reachable within ${timeoutMs / 1000}s.` };
+  return {
+    ok: false,
+    message: isRunning
+      ? `BOSS TONE STUDIO is running but did not become reachable within ${timeoutMs / 1000}s.`
+      : `BOSS TONE STUDIO was started but did not become reachable within ${timeoutMs / 1000}s.`,
+  };
 }

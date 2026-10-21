@@ -2,7 +2,15 @@ import { expect, it, vi } from 'vitest';
 import { isImageListed, launch, type LaunchDeps } from '../src/launcher.js';
 
 function deps(o: Partial<LaunchDeps>): LaunchDeps {
-  return { exists: () => true, isRunning: async () => false, start: vi.fn(), reachable: async () => false, sleep: async () => {}, ...o };
+  return {
+    exists: () => true,
+    isRunning: async () => false,
+    start: vi.fn(),
+    reachable: async () => false,
+    portOpen: async () => false,
+    sleep: async () => {},
+    ...o,
+  };
 }
 
 const IMAGE = 'BOSS TONE STUDIO for KATANA Gen 3.exe';
@@ -34,10 +42,18 @@ it('does nothing when BTS is already reachable', async () => {
 });
 
 it('refuses to kill a BTS that runs without the debug port', async () => {
-  const d = deps({ isRunning: async () => true });
+  const d = deps({ isRunning: async () => true, portOpen: async () => false });
   const r = await launch(d);
   expect(r.ok).toBe(false);
   expect(r.message).toContain('Close BOSS TONE STUDIO and call katana_launch again');
+  expect(d.start).not.toHaveBeenCalled();
+});
+
+it('polls for script load (not start) when BTS is running and the port is already open', async () => {
+  let n = 0;
+  const d = deps({ isRunning: async () => true, portOpen: async () => true, reachable: async () => ++n >= 2 });
+  const r = await launch(d);
+  expect(r).toEqual({ ok: true, message: 'BOSS TONE STUDIO is open and ready.' });
   expect(d.start).not.toHaveBeenCalled();
 });
 
@@ -70,6 +86,25 @@ it('times out at a non-multiple timeout without over-sleeping', async () => {
   expect(r.ok).toBe(false);
   expect(totalSlept).toBeLessThanOrEqual(700);
   expect(r.message).toContain('0.7s');
+});
+
+it('counts real time spent inside reachable() toward the timeout budget (wall-clock, no real timers)', async () => {
+  let clock = 0;
+  let reachableCalls = 0;
+  const d = deps({
+    now: () => clock,
+    sleep: async () => {}, // instant: no real delay
+    reachable: async () => {
+      reachableCalls++;
+      clock += 6000; // each reachable() call "costs" 6s of wall time
+      return false;
+    },
+  });
+  const r = await launch(d, 20000);
+  expect(r.ok).toBe(false);
+  // Without wall-clock accounting, 20000ms / 500ms step would allow 40 polls (41 calls incl.
+  // the initial check); with reachable() time counted, the budget is exhausted after a handful.
+  expect(reachableCalls).toBeLessThanOrEqual(5);
 });
 
 it('reports ok:false without starting when the exe is missing', async () => {
