@@ -12,6 +12,19 @@ The project has two parts:
 - **Claude Code skill** (`katana-tone`) — tells Claude how to turn a tone description into parameter changes
   (workflow, safe ranges, amp/effect type names, starting points for common styles).
 
+## Who is it for?
+
+- **The player who thinks in sounds, not settings.** Knows the tone they want (*"Hendrix clean"*, *"thick
+  doom riff"*) but not which gain, EQ or amp type gets there. Claude translates the description into parameter
+  changes and explains what it changed, so they also learn the amp along the way.
+- **The player who knows exactly what they want.** Would rather type *"gain 60, treble +2, delay 350 ms"* than
+  click through BOSS TONE STUDIO's panels. Gets precise, multi-parameter edits in one sentence and can read the
+  current tone back at any time.
+- **The player with a guitar in their hands.** Practising or recording and doesn't want to reach for the mouse.
+  Gives short, relative instructions (*"a bit brighter"*, *"delay off"*, *"less gain"*); Claude reads the current
+  values first and adjusts from there. Edits stay live until WRITE is pressed, so experimenting can't overwrite a
+  saved patch by accident.
+
 > Not affiliated with or endorsed by Roland / BOSS. "BOSS", "KATANA" and "BOSS TONE STUDIO" are trademarks of
 > Roland Corporation. No Roland files are included in this repository.
 
