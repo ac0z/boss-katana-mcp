@@ -20,6 +20,7 @@
   <img src="https://img.shields.io/badge/amp-KATANA%20Gen%203-2b2622?style=flat-square&labelColor=111111" alt="BOSS KATANA Gen 3">
   <img src="https://img.shields.io/badge/platform-Windows-2b2622?style=flat-square&labelColor=111111" alt="Windows">
   <img src="https://img.shields.io/badge/node-%E2%89%A524-2b2622?style=flat-square&labelColor=111111&logo=nodedotjs&logoColor=white" alt="Node.js 24 or newer">
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-2b2622?style=flat-square&labelColor=111111" alt="PRs welcome"></a>
 </p>
 
 <p align="center">
@@ -163,6 +164,11 @@ python assets/src/build.py   # rebuild the README images (Pillow + Edge)
 > `Enable-BossKatanaMcp.ps1` makes BOSS TONE STUDIO **always** open a DevTools port on `127.0.0.1:9222`. While the
 > app is open, any local process can control it through that port. Run `scripts\Disable-BossKatanaMcp.ps1` when you
 > don't need it.
+
+## Contributing
+
+Issues and pull requests are welcome: tests on other KATANA Gen 3 models, better tone recipes for the skill, new
+skill evals, setup notes for other agents. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ## License
 

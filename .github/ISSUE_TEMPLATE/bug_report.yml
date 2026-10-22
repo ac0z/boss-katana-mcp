@@ -1,0 +1,47 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you asked the agent, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: amp
+    attributes:
+      label: Amp
+      placeholder: KATANA-50 EX Gen 3
+    validations:
+      required: true
+  - type: input
+    id: bts
+    attributes:
+      label: BOSS TONE STUDIO version
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: cli
+    attributes:
+      label: Agent
+      options:
+        - Claude Code
+        - Codex CLI
+        - Gemini CLI
+        - Other MCP client
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows and Node.js versions
+      placeholder: Windows 11 24H2, Node 24.3
+  - type: textarea
+    id: status
+    attributes:
+      label: katana_status output
+      description: Ask the agent to run `katana_status` and paste the result.
+      render: json

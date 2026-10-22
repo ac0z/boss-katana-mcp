@@ -1,0 +1,22 @@
+name: Feature or tone idea
+description: A new feature, a better tone recipe or a missing parameter
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Feature
+        - Tone recipe for the skill
+        - Missing or wrong parameter
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What should change and why. For a tone recipe, the style and the settings you use for it.
+    validations:
+      required: true
