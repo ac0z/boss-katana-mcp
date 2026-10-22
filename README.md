@@ -12,12 +12,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/license-MIT-d97757?style=flat-square&labelColor=111111" alt="MIT license">
-  <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Gemini-d97757?style=flat-square&labelColor=111111" alt="Works with Claude Code, Codex CLI and Gemini CLI">
-  <img src="https://img.shields.io/badge/MCP-stdio-d97757?style=flat-square&labelColor=111111" alt="MCP stdio server">
-  <img src="https://img.shields.io/badge/amp-KATANA%20Gen%203-d97757?style=flat-square&labelColor=111111" alt="BOSS KATANA Gen 3">
-  <img src="https://img.shields.io/badge/platform-Windows-d97757?style=flat-square&labelColor=111111" alt="Windows">
-  <img src="https://img.shields.io/badge/node-%E2%89%A524-d97757?style=flat-square&labelColor=111111" alt="Node.js 24 or newer">
+  <img src="https://img.shields.io/badge/license-MIT-2b2622?style=flat-square&labelColor=111111" alt="MIT license">
+  <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Gemini-2b2622?style=flat-square&labelColor=111111&logo=claude&logoColor=d97757" alt="Works with Claude Code, Codex CLI and Gemini CLI">
+  <img src="https://img.shields.io/badge/MCP-stdio-2b2622?style=flat-square&labelColor=111111&logo=modelcontextprotocol&logoColor=white" alt="MCP stdio server">
+  <img src="https://img.shields.io/badge/amp-KATANA%20Gen%203-2b2622?style=flat-square&labelColor=111111" alt="BOSS KATANA Gen 3">
+  <img src="https://img.shields.io/badge/platform-Windows-2b2622?style=flat-square&labelColor=111111" alt="Windows">
+  <img src="https://img.shields.io/badge/node-%E2%89%A524-2b2622?style=flat-square&labelColor=111111&logo=nodedotjs&logoColor=white" alt="Node.js 24 or newer">
 </p>
 
 <p align="center">
@@ -114,7 +114,7 @@ The MCP server attaches to BOSS TONE STUDIO's WebView2 page and calls the app's 
 program talking to the amp. The `katana-tone` skill tells the agent how to turn a description into those changes.
 
 <p align="center">
-  <a href="docs/design.md"><img src="https://img.shields.io/badge/read%20the-design%20notes%20%E2%86%92-d97757?style=for-the-badge&labelColor=111111" alt="Read the design notes"></a>
+  <a href="docs/design.md"><img src="https://img.shields.io/badge/read%20the-design%20notes%20%E2%86%92-2b2622?style=for-the-badge&labelColor=111111" alt="Read the design notes"></a>
 </p>
 
 <details>
