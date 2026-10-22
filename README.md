@@ -1,36 +1,76 @@
-# boss-katana-mcp
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <img src="assets/logo.png" width="260" alt="A pixel-art mascot sitting on a guitar amp, turning one of its knobs">
+  </picture>
+</p>
 
-Control a **BOSS KATANA Gen 3** amp in plain language from an AI coding agent: [Claude Code](https://claude.com/claude-code),
-[Codex CLI](https://github.com/openai/codex) or [Gemini CLI](https://github.com/google-gemini/gemini-cli).
+<h1 align="center">boss-katana-mcp</h1>
+
+<p align="center">
+  <em>Say the tone. The knobs turn themselves.</em>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-d97757?style=flat-square&labelColor=111111" alt="MIT license">
+  <img src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Codex%20%C2%B7%20Gemini-d97757?style=flat-square&labelColor=111111" alt="Works with Claude Code, Codex CLI and Gemini CLI">
+  <img src="https://img.shields.io/badge/MCP-stdio-d97757?style=flat-square&labelColor=111111" alt="MCP stdio server">
+  <img src="https://img.shields.io/badge/amp-KATANA%20Gen%203-d97757?style=flat-square&labelColor=111111" alt="BOSS KATANA Gen 3">
+  <img src="https://img.shields.io/badge/platform-Windows-d97757?style=flat-square&labelColor=111111" alt="Windows">
+  <img src="https://img.shields.io/badge/node-%E2%89%A524-d97757?style=flat-square&labelColor=111111" alt="Node.js 24 or newer">
+</p>
+
+<p align="center">
+  <img src="assets/hero.png" width="880" alt="boss-katana-mcp. Live in BOSS TONE STUDIO. Say the tone, the knobs turn themselves. 6 MCP tools, 13 sections, 3 agents, 0 clicks.">
+</p>
+
+Control a **BOSS KATANA Gen 3** amp in plain language from an AI coding agent:
+[Claude Code](https://claude.com/claude-code), [Codex CLI](https://github.com/openai/codex) or
+[Gemini CLI](https://github.com/google-gemini/gemini-cli). Describe a tone — *"80s hard rock lead"*, *"a bit
+brighter"*, *"add some delay"*, *"volume to 12"* — and the agent sets the amp and effect parameters through the
+original **BOSS TONE STUDIO for KATANA Gen 3** app. The app's knobs and switches move live, exactly as if you had
+turned them yourself.
+
+---
 
 ## Demo
 
-Recorded in Claude Code; Codex CLI and Gemini CLI use the same MCP server and skill.
+<table>
+  <tr>
+    <td width="50%"><img src="assets/demo-thrash.gif" alt="Claude Code setting a thrash metal tone; the knobs in BOSS TONE STUDIO move live"></td>
+    <td width="50%"><img src="assets/demo-blues.gif" alt="Claude Code setting a blues tone with sustain and delay; the effects in BOSS TONE STUDIO switch live"></td>
+  </tr>
+  <tr>
+    <td><b>"write a thrash metal tone"</b><br><sub>Amp LEAD → BROWN, scooped mids, a T-SCREAM with zero drive to tighten the low end, delay off, a short ROOM reverb and a higher noise gate.</sub></td>
+    <td><b>"write blues tones with long sustain and delay"</b><br><sub>Same patch, next request: CRUNCH amp, mids back, BLUES DRIVE, a compressor for sustain, ANALOG delay on and a SPRING reverb.</sub></td>
+  </tr>
+</table>
 
-### "write a thrash metal tone"
+<sub>Recorded in Claude Code. Codex CLI and Gemini CLI use the same MCP server and skill.</sub>
 
-![Claude Code setting a thrash metal tone in BOSS TONE STUDIO](docs/media/demo-thrash.gif)
+## Before / after
 
-One sentence in Claude Code, and the knobs in BOSS TONE STUDIO move on their own. Claude switches the amp from
-LEAD to BROWN, scoops the mids, puts a T-SCREAM booster with zero drive in front of the amp to tighten the low end,
-turns the delay off, swaps the hall reverb for a short ROOM and raises the noise gate threshold. It then explains
-each change with its old and new value and reminds you to press WRITE if you want to keep it.
+<p align="center">
+  <img src="assets/before-after.png" width="880" alt="One sentence, twelve changes. Prompt: write a thrash metal tone. Amp type LEAD to BROWN, gain 55 to 65, bass 55 to 65, middle 70 to 40, treble 60 to 65, presence 50 to 60, T-SCREAM drive 40 to 0, booster tone 0 to 10, booster level 70 to 80, delay on to off, reverb HALL to ROOM, noise gate threshold 30 to 45.">
+</p>
 
-### "write blues tones with long sustain and delay"
+The agent reads the current patch first, sets every change in one call and then explains each one with its old
+and new value. Nothing is saved until you press **WRITE**, so trying ideas can't overwrite a stored patch.
 
-![Claude Code setting a blues tone with sustain and delay in BOSS TONE STUDIO](docs/media/demo-blues.gif)
+## Who is it for?
 
-A second request on the same patch, starting from the thrash tone. Claude moves the amp to CRUNCH, brings the
-mids back, swaps the booster for a BLUES DRIVE, adds a compressor on the MOD slot for sustain, turns on an ANALOG
-delay and changes the reverb to SPRING. Every change shows up live in the app while Claude is still working.
+<p align="center">
+  <img src="assets/who-is-it-for.png" width="880" alt="Three players, one amp. Thinks in sounds, not settings: Hendrix clean, thick doom riff. Knows exactly what they want: gain 60, treble +2, delay 350 ms. Has a guitar in their hands: a bit brighter, delay off.">
+</p>
 
-## Overview
+- **Thinks in sounds, not settings.** Knows the tone (*"Hendrix clean"*, *"thick doom riff"*) but not which gain,
+  EQ or amp type gets there. The agent translates it and explains what it changed, so you learn the amp too.
+- **Knows exactly what they want.** Would rather type *"gain 60, treble +2, delay 350 ms"* than click through
+  BOSS TONE STUDIO's panels, and can read the current tone back at any time.
+- **Has a guitar in their hands.** Gives short, relative instructions (*"a bit brighter"*, *"delay off"*); the agent
+  reads the current values first and adjusts from there.
 
-Describe a tone — *"80s hard rock lead"*, *"a bit brighter"*, *"add some delay"*, *"volume to 12"* — and the agent
-sets the amp and effect parameters through the original **BOSS TONE STUDIO for KATANA Gen 3** app. The app's
-knobs and switches move live, exactly as if you had turned them yourself.
-
-The project has two parts:
+## What's inside
 
 - **MCP server** (`katana`, Node/TypeScript) — the tools the agent calls to read and write parameters. It is a
   plain stdio MCP server, so any MCP client can use it.
@@ -38,21 +78,9 @@ The project has two parts:
   (workflow, safe ranges, amp/effect type names, starting points for common styles). It is a standard `SKILL.md`
   skill, which Claude Code, Codex CLI and Gemini CLI all load.
 
-## Who is it for?
-
-- **The player who thinks in sounds, not settings.** Knows the tone they want (*"Hendrix clean"*, *"thick
-  doom riff"*) but not which gain, EQ or amp type gets there. The agent translates the description into parameter
-  changes and explains what it changed, so they also learn the amp along the way.
-- **The player who knows exactly what they want.** Would rather type *"gain 60, treble +2, delay 350 ms"* than
-  click through BOSS TONE STUDIO's panels. Gets precise, multi-parameter edits in one sentence and can read the
-  current tone back at any time.
-- **The player with a guitar in their hands.** Practising or recording and doesn't want to reach for the mouse.
-  Gives short, relative instructions (*"a bit brighter"*, *"delay off"*, *"less gain"*); the agent reads the current
-  values first and adjusts from there. Edits stay live until WRITE is pressed, so experimenting can't overwrite a
-  saved patch by accident.
-
-> Not affiliated with or endorsed by Roland / BOSS. "BOSS", "KATANA" and "BOSS TONE STUDIO" are trademarks of
-> Roland Corporation. No Roland files are included in this repository.
+> Not affiliated with or endorsed by Roland / BOSS or Anthropic. "BOSS", "KATANA" and "BOSS TONE STUDIO" are
+> trademarks of Roland Corporation; the mascot in the logo is Anthropic's Claude Code character. No Roland files
+> are included in this repository.
 
 ## Requirements
 
@@ -90,14 +118,21 @@ Read [Security](#security) before enabling it. Undo with `scripts\Disable-BossKa
 
 Register it under the name `katana` with the CLI you use. The skill refers to the tools by these names.
 
-**Claude Code** — run from the folder where you start Claude Code (local scope), or add `-s user` to make it
-available everywhere:
+<details open>
+<summary><b>Claude Code</b></summary>
+
+Run from the folder where you start Claude Code (local scope), or add `-s user` to make it available everywhere:
 
 ```powershell
 claude mcp add katana -- node C:/path/to/boss-katana-mcp/dist/index.js
 ```
 
-**Codex CLI** — adds it to `%USERPROFILE%\.codex\config.toml`:
+</details>
+
+<details>
+<summary><b>Codex CLI</b></summary>
+
+Adds it to `%USERPROFILE%\.codex\config.toml`:
 
 ```powershell
 codex mcp add katana -- node C:/path/to/boss-katana-mcp/dist/index.js
@@ -110,11 +145,18 @@ Codex asks before each MCP tool call. To let the `katana` tools run without aski
 default_tools_approval_mode = "approve"
 ```
 
-**Gemini CLI** — project scope by default, add `-s user` to make it available everywhere:
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+Project scope by default, add `-s user` to make it available everywhere:
 
 ```powershell
 gemini mcp add katana node C:/path/to/boss-katana-mcp/dist/index.js
 ```
+
+</details>
 
 Check it with `claude mcp list`, `codex mcp list` or `gemini mcp list`.
 
@@ -178,18 +220,9 @@ Sections: `amp`, `booster`, `mod`, `fx`, `delay`, `delay2`, `reverb`, `ns`, `eq`
 
 ## How it works
 
-```
-        Claude Code / Codex CLI / Gemini CLI
-                          │ stdio
-                          ▼
-                 katana MCP server (Node)
-                          │ Chrome DevTools Protocol, 127.0.0.1:9222
-                          ▼
-                     BOSS TONE STUDIO (WebView2 page)
-                          │ USB MIDI
-                          ▼
-                       KATANA Gen 3
-```
+<p align="center">
+  <img src="assets/how-it-works.png" width="880" alt="How it works. Your agent (Claude Code, Codex CLI, Gemini CLI) talks MCP over stdio to the katana MCP server, which uses the DevTools Protocol on port 9222 to drive BOSS TONE STUDIO, which sends SysEx DT1 over USB MIDI to the KATANA Gen 3.">
+</p>
 
 BOSS TONE STUDIO is a WebView2 app whose UI is an HTML/JS bundle. The MCP server attaches to that page over the
 DevTools Protocol and uses the app's own code: `Parameter.setValue` writes a value and sends the Roland SysEx DT1
@@ -245,6 +278,7 @@ src/
   connect.ts      connects the amp and waits for its patch to load
   launcher.ts     starts BOSS TONE STUDIO with the debug port
 skill/katana-tone/SKILL.md   agent skill (Claude Code, Codex CLI, Gemini CLI)
+assets/                      README images; rebuild with `python assets/src/build.py` (Pillow + Edge)
 scripts/                      enable/disable the WebView2 debug-port policy
 test/                         unit and e2e tests
 ```
@@ -253,4 +287,4 @@ test/                         unit and e2e tests
 
 [MIT](LICENSE) © 2026 Doğa Koçak
 
-This is a hobby project, made for fun and without any commercial intent. It is not affiliated with Roland / BOSS.
+This is a hobby project, made for fun and without any commercial intent. It is not affiliated with Roland / BOSS or Anthropic.
