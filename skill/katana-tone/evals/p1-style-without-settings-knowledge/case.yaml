@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: p1-style-without-settings-knowledge
+expected_outcome: |
+  Persona 1 (thinks in sounds). Claude checks the connection, reads the current tone, sets a blues-style
+  tone in a single katana_set (crunchy amp, a blues/screamer-type booster, spring or room reverb) and explains
+  the changes in plain words a non-technical player understands, reminding them to press WRITE to keep it.

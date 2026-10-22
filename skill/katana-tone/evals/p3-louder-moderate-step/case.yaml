@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: p3-louder-moderate-step
+expected_outcome: |
+  Persona 3 (guitar in hand). An open-ended volume request. Claude raises amp.volume relative to the current
+  value but by no more than 20 in one step, and offers to raise it further if needed.

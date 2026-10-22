@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: p1-vague-softer-warmer
+expected_outcome: |
+  Persona 1 (thinks in sounds). A vague complaint about harshness. Claude reads the current values and makes a
+  moderate change relative to them: lower treble and/or presence (optionally a little less gain or more
+  bass/middle), without swapping to an unrelated style. It explains the change in plain words.

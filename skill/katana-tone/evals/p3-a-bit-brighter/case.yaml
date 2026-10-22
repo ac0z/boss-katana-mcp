@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: p3-a-bit-brighter
+expected_outcome: |
+  Persona 3 (guitar in hand). A short relative command. Claude reads the current EQ, raises treble and/or
+  presence by a small step, and answers in a few lines.

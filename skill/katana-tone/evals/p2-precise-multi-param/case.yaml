@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: p2-precise-multi-param
+expected_outcome: |
+  Persona 2 (knows the settings). Claude applies exactly the requested values in one katana_set call and
+  changes nothing else, then confirms old → new.

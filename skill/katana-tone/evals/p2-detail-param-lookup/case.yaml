@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: p2-detail-param-lookup
+expected_outcome: |
+  Persona 2 (knows the settings). A detail parameter of a mod/fx type. Claude finds where CHORUS is (or turns it
+  on in mod), looks up the chorus detail keys with katana_list_params instead of guessing them, and sets
+  rate lower and depth higher relative to the current values.
