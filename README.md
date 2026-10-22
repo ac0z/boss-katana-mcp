@@ -35,16 +35,23 @@ turned them yourself.
 
 ## Demo
 
-<table>
-  <tr>
-    <td width="50%"><img src="assets/demo-thrash.gif" alt="Claude Code setting a thrash metal tone; the knobs in BOSS TONE STUDIO move live"></td>
-    <td width="50%"><img src="assets/demo-blues.gif" alt="Claude Code setting a blues tone with sustain and delay; the effects in BOSS TONE STUDIO switch live"></td>
-  </tr>
-  <tr>
-    <td><b>"write a thrash metal tone"</b><br><sub>Amp LEAD → BROWN, scooped mids, a T-SCREAM with zero drive to tighten the low end, delay off, a short ROOM reverb and a higher noise gate.</sub></td>
-    <td><b>"write blues tones with long sustain and delay"</b><br><sub>Same patch, next request: CRUNCH amp, mids back, BLUES DRIVE, a compressor for sustain, ANALOG delay on and a SPRING reverb.</sub></td>
-  </tr>
-</table>
+### "write a thrash metal tone"
+
+<p align="center">
+  <img src="assets/demo-thrash.gif" width="880" alt="Claude Code setting a thrash metal tone; the knobs in BOSS TONE STUDIO move live">
+</p>
+
+Amp LEAD → BROWN, scooped mids, a T-SCREAM with zero drive to tighten the low end, delay off, a short ROOM reverb
+and a higher noise gate.
+
+### "write blues tones with long sustain and delay"
+
+<p align="center">
+  <img src="assets/demo-blues.gif" width="880" alt="Claude Code setting a blues tone with sustain and delay; the effects in BOSS TONE STUDIO switch live">
+</p>
+
+Same patch, next request: CRUNCH amp, mids back, BLUES DRIVE, a compressor for sustain, ANALOG delay on and a
+SPRING reverb.
 
 <sub>Recorded in Claude Code. Codex CLI and Gemini CLI use the same MCP server and skill.</sub>
 
