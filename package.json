@@ -2,6 +2,7 @@
   "name": "boss-katana-mcp",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "bin": { "boss-katana-mcp": "dist/index.js" },
   "scripts": {

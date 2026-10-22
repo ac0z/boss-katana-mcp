@@ -1,8 +1,11 @@
 # boss-katana-mcp
 
-Control a **BOSS KATANA Gen 3** amp from [Claude Code](https://claude.com/claude-code) in plain language.
+Control a **BOSS KATANA Gen 3** amp in plain language from an AI coding agent: [Claude Code](https://claude.com/claude-code),
+[Codex CLI](https://github.com/openai/codex) or [Gemini CLI](https://github.com/google-gemini/gemini-cli).
 
 ## Demo
+
+Recorded in Claude Code; Codex CLI and Gemini CLI use the same MCP server and skill.
 
 ### "write a thrash metal tone"
 
@@ -23,26 +26,28 @@ delay and changes the reverb to SPRING. Every change shows up live in the app wh
 
 ## Overview
 
-Describe a tone — *"80s hard rock lead"*, *"a bit brighter"*, *"add some delay"*, *"volume to 12"* — and Claude
+Describe a tone — *"80s hard rock lead"*, *"a bit brighter"*, *"add some delay"*, *"volume to 12"* — and the agent
 sets the amp and effect parameters through the original **BOSS TONE STUDIO for KATANA Gen 3** app. The app's
 knobs and switches move live, exactly as if you had turned them yourself.
 
 The project has two parts:
 
-- **MCP server** (`katana`, Node/TypeScript) — the tools Claude calls to read and write parameters.
-- **Claude Code skill** (`katana-tone`) — tells Claude how to turn a tone description into parameter changes
-  (workflow, safe ranges, amp/effect type names, starting points for common styles).
+- **MCP server** (`katana`, Node/TypeScript) — the tools the agent calls to read and write parameters. It is a
+  plain stdio MCP server, so any MCP client can use it.
+- **Agent skill** (`katana-tone`) — tells the agent how to turn a tone description into parameter changes
+  (workflow, safe ranges, amp/effect type names, starting points for common styles). It is a standard `SKILL.md`
+  skill, which Claude Code, Codex CLI and Gemini CLI all load.
 
 ## Who is it for?
 
 - **The player who thinks in sounds, not settings.** Knows the tone they want (*"Hendrix clean"*, *"thick
-  doom riff"*) but not which gain, EQ or amp type gets there. Claude translates the description into parameter
+  doom riff"*) but not which gain, EQ or amp type gets there. The agent translates the description into parameter
   changes and explains what it changed, so they also learn the amp along the way.
 - **The player who knows exactly what they want.** Would rather type *"gain 60, treble +2, delay 350 ms"* than
   click through BOSS TONE STUDIO's panels. Gets precise, multi-parameter edits in one sentence and can read the
   current tone back at any time.
 - **The player with a guitar in their hands.** Practising or recording and doesn't want to reach for the mouse.
-  Gives short, relative instructions (*"a bit brighter"*, *"delay off"*, *"less gain"*); Claude reads the current
+  Gives short, relative instructions (*"a bit brighter"*, *"delay off"*, *"less gain"*); the agent reads the current
   values first and adjusts from there. Edits stay live until WRITE is pressed, so experimenting can't overwrite a
   saved patch by accident.
 
@@ -56,7 +61,7 @@ The project has two parts:
 - A KATANA Gen 3 amp connected over USB (other KATANA generations use a different BOSS TONE STUDIO app and are
   not supported)
 - Node.js 24 or newer
-- Claude Code
+- One of: Claude Code, Codex CLI or Gemini CLI
 
 ## Installation
 
@@ -83,30 +88,63 @@ Read [Security](#security) before enabling it. Undo with `scripts\Disable-BossKa
 
 ### 3. Register the MCP server
 
-Run from the folder where you start Claude Code (local scope), or add `-s user` to make it available everywhere:
+Register it under the name `katana` with the CLI you use. The skill refers to the tools by these names.
+
+**Claude Code** — run from the folder where you start Claude Code (local scope), or add `-s user` to make it
+available everywhere:
 
 ```powershell
 claude mcp add katana -- node C:/path/to/boss-katana-mcp/dist/index.js
 ```
 
-Check it with `claude mcp list` — `katana` should show as connected.
+**Codex CLI** — adds it to `%USERPROFILE%\.codex\config.toml`:
+
+```powershell
+codex mcp add katana -- node C:/path/to/boss-katana-mcp/dist/index.js
+```
+
+Codex asks before each MCP tool call. To let the `katana` tools run without asking, add this to the
+`[mcp_servers.katana]` table in `config.toml`:
+
+```toml
+default_tools_approval_mode = "approve"
+```
+
+**Gemini CLI** — project scope by default, add `-s user` to make it available everywhere:
+
+```powershell
+gemini mcp add katana node C:/path/to/boss-katana-mcp/dist/index.js
+```
+
+Check it with `claude mcp list`, `codex mcp list` or `gemini mcp list`.
 
 ### 4. Install the skill
 
-Make `skill/katana-tone` visible to Claude Code, either for one project (`<project>\.claude\skills\katana-tone`)
-or for your user (`%USERPROFILE%\.claude\skills\katana-tone`). A directory junction keeps it in sync with the
-repo and needs no admin rights:
+Put `skill/katana-tone` where your CLI looks for skills:
+
+| CLI | For your user | For one project |
+| --- | --- | --- |
+| Claude Code | `%USERPROFILE%\.claude\skills\katana-tone` | `<project>\.claude\skills\katana-tone` |
+| Codex CLI | `%USERPROFILE%\.agents\skills\katana-tone` | `<project>\.agents\skills\katana-tone` |
+| Gemini CLI | `%USERPROFILE%\.agents\skills\katana-tone` | `<project>\.agents\skills\katana-tone` |
+
+Codex CLI and Gemini CLI share `.agents\skills`, so one link covers both. A directory junction keeps the skill in
+sync with the repo and needs no admin rights:
 
 ```powershell
+# Claude Code
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\katana-tone" -Target "C:\path\to\boss-katana-mcp\skill\katana-tone"
+# Codex CLI and Gemini CLI
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.agents\skills\katana-tone" -Target "C:\path\to\boss-katana-mcp\skill\katana-tone"
 ```
 
-Copying the folder works too. Restart Claude Code so it picks up the skill.
+Create the parent `skills` folder first if it doesn't exist. Copying the folder works too. Restart the CLI so it
+picks up the skill.
 
 ## Usage
 
 1. Switch on the amp and connect it over USB.
-2. Start Claude Code and ask for a tone. You don't need to open BOSS TONE STUDIO first — Claude starts it and
+2. Start your CLI and ask for a tone. You don't need to open BOSS TONE STUDIO first — the agent starts it and
    connects it to the amp when needed.
 
 Examples:
@@ -119,7 +157,7 @@ Examples:
 > volume 12
 ```
 
-Claude replies with what changed (old → new) and why. Requests in other languages work as well.
+The agent replies with what changed (old → new) and why. Requests in other languages work as well.
 
 **Changes are not saved automatically.** They are live edits of the current patch (the amp's edit buffer).
 Press **WRITE** in BOSS TONE STUDIO or on the amp to store them in a patch.
@@ -141,7 +179,10 @@ Sections: `amp`, `booster`, `mod`, `fx`, `delay`, `delay2`, `reverb`, `ns`, `eq`
 ## How it works
 
 ```
-Claude Code ──stdio──▶ katana MCP server (Node)
+        Claude Code / Codex CLI / Gemini CLI
+                          │ stdio
+                          ▼
+                 katana MCP server (Node)
                           │ Chrome DevTools Protocol, 127.0.0.1:9222
                           ▼
                      BOSS TONE STUDIO (WebView2 page)
@@ -175,10 +216,10 @@ need it.
 | Symptom | Fix |
 | --- | --- |
 | `BOSS TONE STUDIO is not reachable` | Run `Enable-BossKatanaMcp.ps1`, then restart BOSS TONE STUDIO (or let `katana_launch` start it) |
-| `ampConnected: false` | Check the amp is on and the USB cable is connected, then ask Claude to reconnect (`katana_connect`) |
+| `ampConnected: false` | Check the amp is on and the USB cable is connected, then ask the agent to reconnect (`katana_connect`) |
 | Values look like defaults (`amp.volume 50`, patch `KATANA`) | The amp's patch hasn't loaded yet; wait for `ampConnected: true` |
 | `katana_launch` can't find the app | BOSS TONE STUDIO must be installed in `C:\Program Files (x86)\BOSS\BOSS TONE STUDIO for KATANA Gen 3\` |
-| `running without the debug port` | BOSS TONE STUDIO was started before the policy was set; close it and let Claude start it again |
+| `running without the debug port` | BOSS TONE STUDIO was started before the policy was set; close it and let the agent start it again |
 | Port 9222 already in use | Close the other tool that uses 9222 (e.g. a browser started with remote debugging) |
 
 ## Development
@@ -203,7 +244,13 @@ src/
   bts.ts          BOSS TONE STUDIO client over CDP
   connect.ts      connects the amp and waits for its patch to load
   launcher.ts     starts BOSS TONE STUDIO with the debug port
-skill/katana-tone/SKILL.md   Claude Code skill
+skill/katana-tone/SKILL.md   agent skill (Claude Code, Codex CLI, Gemini CLI)
 scripts/                      enable/disable the WebView2 debug-port policy
 test/                         unit and e2e tests
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Doğa Koçak
+
+This is a hobby project, made for fun and without any commercial intent. It is not affiliated with Roland / BOSS.
