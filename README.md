@@ -2,6 +2,27 @@
 
 Control a **BOSS KATANA Gen 3** amp from [Claude Code](https://claude.com/claude-code) in plain language.
 
+## Demo
+
+### "write a thrash metal tone"
+
+![Claude Code setting a thrash metal tone in BOSS TONE STUDIO](docs/media/demo-thrash.gif)
+
+One sentence in Claude Code, and the knobs in BOSS TONE STUDIO move on their own. Claude switches the amp from
+LEAD to BROWN, scoops the mids, puts a T-SCREAM booster with zero drive in front of the amp to tighten the low end,
+turns the delay off, swaps the hall reverb for a short ROOM and raises the noise gate threshold. It then explains
+each change with its old and new value and reminds you to press WRITE if you want to keep it.
+
+### "write blues tones with long sustain and delay"
+
+![Claude Code setting a blues tone with sustain and delay in BOSS TONE STUDIO](docs/media/demo-blues.gif)
+
+A second request on the same patch, starting from the thrash tone. Claude moves the amp to CRUNCH, brings the
+mids back, swaps the booster for a BLUES DRIVE, adds a compressor on the MOD slot for sustain, turns on an ANALOG
+delay and changes the reverb to SPRING. Every change shows up live in the app while Claude is still working.
+
+## Overview
+
 Describe a tone — *"80s hard rock lead"*, *"a bit brighter"*, *"add some delay"*, *"volume to 12"* — and Claude
 sets the amp and effect parameters through the original **BOSS TONE STUDIO for KATANA Gen 3** app. The app's
 knobs and switches move live, exactly as if you had turned them yourself.
