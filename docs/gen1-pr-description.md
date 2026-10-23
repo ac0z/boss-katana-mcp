@@ -1,56 +1,45 @@
-# PR draft â€” not submitted
+# Pull request description
 
-Title: **Add experimental KATANA-50 Gen 1 MIDI controls and a guarded metal-tone tool**
+Title: **Add experimental KATANA-50 Gen 1 MIDI controls and guarded tone editing**
 
-The original KATANA-50 cannot use the server's Gen 3 WebView2/PID backend. This
-adds a separately selected `KATANA_BACKEND=gen1` MIDI adapter with eight isolated
-`katana_gen1_*` tools; the six default Gen 3 tools and their implementations remain
-unchanged. Hardware and writes are disabled by default.
+Target: `ac0z/boss-katana-mcp:main`
+Head: `karmasis-alicem-ozkara:feat/katana-gen1-support`
 
-The adapter discovers a unique KATANA pair, checks the observed Roland identity
-plus operator model attestation, reads 32 raw fields and permits source-bounded
-writes only to 16 effective controls. It rejects system/panel, arbitrary-address,
-patch-save and firmware writes. Strict framing/checksum/readback validation,
-serialization, bounded sends and an irreversible uncertainty latch prevent
-automatic retries or rollback after a questionable transaction.
+## What changed
 
-`katana_gen1_apply_tone` defaults to a zero-I/O metal preview. Applying requires
-`dryRun:false`, a connection and separate write/low-MASTER startup opt-ins. It
-backs up all fields, reduces effective LEVEL to zero, verifies every target and
-finishes at a non-increasing LEVEL, default at most 5. General LEVEL writes are
-capped at 10; this is a software policy, not an acoustic safety guarantee.
+Add experimental direct USB MIDI/SysEx support for the original KATANA-50 while preserving the existing Gen 3 BTS/CDP backend as the default. Select `KATANA_BACKEND=gen1` to expose eight isolated Gen 1 tools; hardware access and writes remain disabled by default.
 
-Source facts come from the operator's earlier evidence, pinned installed BTS
-definitions and attributed original protocol measurements. No unlicensed local
-implementation or proprietary Roland asset is copied. The requested delay/reverb extension also supports wet levels 0..50; raw 15
-for both effects passed readback with LEVEL unchanged at 5. The optional MIDI runtime
-dependency is MIT; no dependency was added for the tone extension.
+The adapter discovers a unique KATANA port pair, validates the observed Roland identity plus operator confirmation of the physical model, and reads 32 raw parameters. Sixteen effective controls have source-bounded experimental writes. The metal-tone tool previews with zero device I/O by default and requires `dryRun:false` plus explicit hardware/write/low-MASTER opt-ins to apply.
 
-Validation:
+All commands are serialized. Writes validate canonical parameter addresses, raw bounds, checksums and exact readback; an uncertain send or reply locks the session without retry or rollback. Tone application captures original values, reduces temporary LEVEL to zero, verifies the targets, and ends at a non-increasing LEVEL (default at most 5). Main LEVEL writes are capped at 10; delay/reverb wet levels are capped at 50. These are software policies, not acoustic safety guarantees. System/panel, arbitrary-address, patch-save and firmware writes are unavailable.
 
-- `npm run build`: **PASS**.
-- `npm test`: **139 PASS, 49 SKIPPED**; original runnable Gen 3 checks pass.
-- `npm run test:gen1`: **118 PASS**, including real SDK/mock integrations.
-- `npm audit --omit=dev`: zero reported vulnerabilities.
-- Static BTS definition checks: **PASS**, no device access.
-- Initial read-only physical session: **PASS**, 20 addresses / 23 RQ1, zero DT1.
-- Later explicitly approved metal session: **PASS**, identity + 70 RQ1 + nine
-  effective DT1 writes, exact target readback, LEVEL 28â†’0â†’5 and clean disconnect.
-  Six unchanged fields skipped writes. Retained raw traces and independent
-  offline verifiers support both sessions.
-- Four offline tamper variants rejected. Original local source/evidence hashes
-  remain unchanged. Current extension received a manual static safety/security
-  review; the earlier automated security scan predates this extension.
-- Installed Gen 3 BTS sandbox/live e2e: **SKIPPED** (48 + 1 tests).
-- Audible quality, persistence, other firmware/models, range endpoints, physical
-  fault injection and effect enabling: **UNVERIFIED / NOT RUN**.
+The optional native MIDI dependency is lazy-loaded. No local unlicensed implementation or proprietary Roland asset is copied. Protocol/source facts, compatibility limits, manual hardware plans, command logs, captured raw MIDI and offline evidence verifiers are included.
 
-Identity cannot establish the exact physical submodel or firmware. Reads and tone
-edits are sequential, not atomic; unsolicited same-address DT1 can resemble a
-read response. Fragmented messages, driver hangs and cross-process ownership
-need qualification. An interrupted tone can leave partial state; original values,
-completed steps and the failing stage are reported, with no recovery write.
+## How it was tested
 
-See [validation](gen1-validation.md), [source and write policy](gen1-write-support.md)
-and [the approved session report](gen1-hardware-metal-2026-10-23.md).
-This draft awaits operator review. **No upstream PR has been opened.**
+- [x] `npm run build` - PASS (Windows x64, Node 24.14.1).
+- [x] `npm test` - **139 PASS / 49 SKIPPED**. The 21 runnable original Gen 3 tests remain passing; 48 installed-Gen-3-BTS tests and one opt-in live e2e test are skipped.
+- [x] `npm run test:gen1` - **118 PASS**, including protocol vectors, mock transports/native classes, real MCP SDK integration, validation, concurrent commands, timeout/fault locking, partial failures and readback checks.
+- [x] `npm audit --omit=dev` - zero reported vulnerabilities at publication validation.
+- [x] Offline source verification - pinned original BTS package hashes and nine exact parameter definitions/map entries checked without hardware access.
+- [x] Read-only physical session - one operator-labelled **KATANA-50 Gen 1**, firmware unknown; 20 addresses / 23 RQ1, identity match, zero outgoing DT1 and clean disconnect. Retained evidence reverified offline.
+- [x] Operator-approved metal session through the actual MCP stdio server - 70 RQ1 / nine temporary DT1 writes, exact target readback, LEVEL 28 -> 0 -> 5, clean disconnect. Its independent evidence verifier passes offline.
+- [x] Subsequent user-commanded delay/reverb sessions - both effects enabled and wet levels set to 15, then 25 and 50 with readback. At 50 the operator confirmed they were audible through the amp speaker; main LEVEL remained 5. This is subjective listening confirmation, not an audio measurement.
+- [x] Captured-file hashes and original local source/evidence preservation checked. No additional hardware operation was performed to prepare this PR.
+- [ ] Full Gen 3 installed-BTS and live hardware regression - SKIPPED.
+- [ ] Other models/firmware, physical unplug/fault recovery, range endpoints, power-cycle persistence and objective audio measurements - NOT RUN.
+- [ ] Patch-save and firmware operations - unavailable and NOT RUN.
+
+The historical automated security scan predates the later tone changes; the current extension received a manual static safety review. Native-driver internals and firmware behavior have not been audited.
+
+## Known limitations and evidence
+
+Experimental support is qualified only for the recorded device, values and sessions. MIDI identity does not prove the exact KATANA-50 submodel or firmware, so operator model confirmation is required. Panel codes differ from effective DSP values. Sequential reads/edits are not atomic, and an interrupted tone may leave partial state; original values and completed steps are reported. Unsolicited same-address DT1 can resemble readback. Fragmented SysEx, cross-process ownership and blocking driver calls need further qualification.
+
+- [Architecture and local source analysis](docs/gen1-architecture.md)
+- [Compatibility and opt-ins](docs/gen1-compatibility.md)
+- [Temporary writes and source bounds](docs/gen1-write-support.md)
+- [Test plan](docs/gen1-test-plan.md) and [validation](docs/gen1-validation.md)
+- [Read-only hardware report](docs/gen1-hardware-readonly-2026-10-23.md)
+- [Approved metal session report](docs/gen1-hardware-metal-2026-10-23.md)
+- [User-command journal and later listening confirmation](docs/gen1-user-command-log.md)
