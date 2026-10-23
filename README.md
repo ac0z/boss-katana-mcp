@@ -85,7 +85,7 @@ See [write support and its source evidence](docs/gen1-write-support.md) and the
 [approved physical session report](docs/gen1-hardware-metal-2026-10-23.md).
 
 The later operator-commanded delay/reverb extension adds `DelayLevel` and bounded
-`ReverbLevel` writes (0..30): 32 readable keys, 16 writable effective controls.
+`ReverbLevel` writes (0..50): 32 readable keys, 16 writable effective controls.
 Both effects ON and wet levels 15 passed readback on the recorded device; audible
 quality remains unverified. Details are in the [command journal](docs/gen1-user-command-log.md).
 

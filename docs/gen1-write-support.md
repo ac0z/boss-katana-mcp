@@ -1,5 +1,16 @@
 # Experimental Gen 1 temporary tone writes
 
+## Current wet-level policy — explicit request for 50
+
+At 22:10 on 2026-10-23, the operator explicitly requested 50 after finding 25
+inaudible. The application ceiling for **DelayLevel/ReverbLevel is now 50**;
+the pinned source limits (120/100), main LEVEL ceiling (10) and write gates
+are unchanged. Both wet levels 25→50 passed readback; main LEVEL stayed 5.
+The user identified the amp speaker as the output and confirmed the effects
+were now audible. This is operator listening confirmation, not an audio
+measurement or a proven explanation of the earlier inaudibility. The earlier
+0..30 restriction described below is historical. See the command journal.
+
 ## Later delay/reverb level extension — 22:04, 2026-10-23
 
 The operator's subsequent `delay ekle ve reverb` command exposed zero wet levels:

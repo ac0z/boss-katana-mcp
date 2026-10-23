@@ -133,3 +133,49 @@ Son audit SHA-256: `e0676644ca41e9af7e93a7b81138152b9f0a291490932274d28bb3ff54b1
 parametre dosyasının kaynak/derlenmiş baytları, hash'leri ve farkı ayrıca
 `source-snapshot.json` ile korunur. Rapor geriye dönük değiştirilmedi.
 Patch save / firmware / otomatik retry / rollback: **Yok**.
+
+
+## 5. Kullanıcı komutu: “arttır duyamıyorum”
+
+2026-10-23 22:08 (Europe/Istanbul). Bağlam gereği delay/reverb efekt seviyeleri
+artırıldı; ana sesin artırılması olarak yorumlanmadı. Gerçek MCP üzerinden
+kimlik ve bağlantı doğrulandı, mevcut değerler okundu.
+
+- Delay efekt seviyesi: ham **15 → 25**, geri okuma PASS.
+- Reverb efekt seviyesi: ham **15 → 25**, geri okuma PASS.
+- DelayOn/ReverbOn: son okumalar **1/1**.
+- Ana TemporaryLevel: **5 → 5**, bu adrese DT1 gönderilmedi.
+- Audit: 1 inquiry, 18 RQ1, 2 DT1, 19 RX; blocked TX 0.
+- Bağlantı temiz kapandı; patch save, firmware veya otomatik retry yok.
+- Duyulurluk henüz kullanıcı tarafından teyit edilmedi.
+- Ham kanıt: `katana-evidence/gen1-effects-increase-command-20261023-2208/`.
+- Audit SHA-256: `d37c8d986e7c9d4eb550b9cc6bec4b61df101ca606a52d3d3abc8bf1436e8bf1`.
+
+
+## 6. Kullanıcı komutu: “neden gelmiyor 50 falan yap”
+
+2026-10-23 22:10 (Europe/Istanbul). Kullanıcı isteğiyle yalnız DelayLevel ve
+ReverbLevel yazılım tavanı 30→50 genişletildi; kaynak aralıkları (120/100), ana
+LEVEL tavanı 10, donanım/yazma başlangıç kapıları değişmedi. Build PASS ve
+Gen 1 offline testleri **118/118 PASS**. Kaynak veya protokol sınırı uydurulmadı.
+
+Gerçek MCP'de DelayLevel **25→50**, ReverbLevel **25→50** yazıldı ve geri
+okundu. DelayOn/ReverbOn son değerleri 1/1; TemporaryLevel 5→5 kaldı. Panel
+DelayFx=9, Reverb=14, Volume=5 ve SignalChainPattern=0 salt okunur sorgulandı.
+Bu panel alanlarına yazılmadı; sıfır olmayan panel kodları tek başına ses
+etkisini kanıtlamaz. 1 inquiry, 22 RQ1, **2 DT1**, 23 RX; blocked TX 0;
+kimlik eşleşti ve bağlantı temiz kapandı. Patch save/firmware/retry yok.
+
+Kullanıcı dinleme çıkışını **“Amfinin hoparlörü”** olarak belirtti. 50 sonrası
+sonuç sorusuna **“Artık duyuluyor”** yanıtı verdi. Sonuç: **PASS — cihaz geri
+okuması + kullanıcı tarafından duyulur etki teyidi**. Bu bir ses ölçümü veya
+başka firmware/çıkışlar için garanti değildir; 25'te duyulmamasının tek ve kesin
+teknik nedeni saptanmış sayılmaz. Ayarlar bu noktada bırakıldı; ek test yok.
+
+Kanıt: `katana-evidence/gen1-effects-50-command-20261023-2210/`.
+Audit SHA-256: `78661db49a7d6d3b5ff9b3184917552071dbf98cc32f8cbc835d66d526ae83aa`.
+Kaydedilen runner'ın `request` etiketi kopyalama sırasında karakter kodlaması
+nedeniyle önceki komutu bozuk karakterlerle taşıdı; yapılan MCP çağrıları ve ham
+50 değerleri doğrudur. Orijinal rapor değiştirilmedi; doğru kullanıcı komutu,
+çalışma ağacı kaynak/derlenmiş parametre dosyaları, hash'leri ve kullanıcı
+ses teyidi `supplement.json` ile ayrıca korundu.

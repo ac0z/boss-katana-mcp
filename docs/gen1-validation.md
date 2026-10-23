@@ -4,6 +4,16 @@ Date: 2026-10-23 (Europe/Istanbul). Windows, Node v24.14.1, Vitest v4.1.12.
 Base: upstream/main `56b6d13786be00e31db650c3923bf047726f5ad9`.
 Branch: `feat/katana-gen1-support`.
 
+## Later explicit wet-level 50 request
+
+Build and 118 Gen 1 offline tests PASS after extending only the two wet-level
+ceilings from 30 to 50. On the same operator-labelled device, both levels 25→50
+passed exact readback (two DT1), main LEVEL stayed 5, 22 RQ1 and clean disconnect
+passed. The operator confirmed listening on the amp speaker and that the effects
+were now audible. No audio measurement, patch save or firmware operation occurred.
+Current 50-session evidence includes the exact working-tree parameter extension,
+its compiled bytes, a raw trace, a metadata correction supplement and file hashes.
+
 ## Subsequent user-commanded metal and delay/reverb changes
 
 2026-10-23 22:01–22:04: metal reapplication passed 70 RQ1 / seven DT1; the

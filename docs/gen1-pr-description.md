@@ -22,7 +22,7 @@ capped at 10; this is a software policy, not an acoustic safety guarantee.
 
 Source facts come from the operator's earlier evidence, pinned installed BTS
 definitions and attributed original protocol measurements. No unlicensed local
-implementation or proprietary Roland asset is copied. The requested delay/reverb extension also supports wet levels 0..30; raw 15
+implementation or proprietary Roland asset is copied. The requested delay/reverb extension also supports wet levels 0..50; raw 15
 for both effects passed readback with LEVEL unchanged at 5. The optional MIDI runtime
 dependency is MIT; no dependency was added for the tone extension.
 

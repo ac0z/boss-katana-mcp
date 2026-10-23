@@ -53,8 +53,8 @@ it('enforces the output ceiling and keeps all panel/system fields read-only', ()
 });
 it.each(['DelayLevel', 'ReverbLevel'])('bounds $0 writes independently of the full source range', async key => {
   expect(validateWrite(key, 0)).toBeDefined();
-  expect(validateWrite(key, 30)).toBeDefined();
-  for (const value of [-1, 31, 100, NaN, 1.5]) expect(() => validateWrite(key, value)).toThrow();
+  expect(validateWrite(key, 50)).toBeDefined();
+  for (const value of [-1, 51, 100, NaN, 1.5]) expect(() => validateWrite(key, value)).toThrow();
   const r = rig(); await r.adapter.connect();
   const h = createGen1Handlers(r.adapter);
   expect((await h.set({ key, value: 15 })).isError).toBeUndefined();
