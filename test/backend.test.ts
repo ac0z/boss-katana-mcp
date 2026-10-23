@@ -23,7 +23,7 @@ it('preserves all six Gen 3 tool names by default and exposes no Gen 1 writes', 
 });
 it('selects isolated Gen 1 tools with hardware disabled unless explicitly opted in', async () => {
   const r = registry(); registerBackend(r.server, { KATANA_BACKEND: 'gen1' }, neverMidi);
-  expect(r.tools.size).toBe(7);
+  expect(r.tools.size).toBe(8);
   expect([...r.tools.keys()].every(k => k.startsWith('katana_gen1_'))).toBe(true);
   const status = JSON.parse((await r.tools.get('katana_gen1_status')!()).content[0].text);
   expect(status).toMatchObject({ hardwareEnabled: false, connected: false, writesEnabled: false });
@@ -51,12 +51,16 @@ it('serves Gen 1 tools through the real MCP SDK with no hardware and validates i
   await server.connect(serverTransport);
   await client.connect(clientTransport);
   try {
-    const listed = await client.listTools(); expect(listed.tools).toHaveLength(7);
+    const listed = await client.listTools(); expect(listed.tools).toHaveLength(8);
     const result = await client.callTool({ name: 'katana_gen1_status', arguments: {} });
     expect(result.isError).not.toBe(true);
     const blocked = await client.callTool({ name: 'katana_gen1_connect', arguments: {} });
     expect(blocked.isError).toBe(true);
     const invalid = await client.callTool({ name: 'katana_gen1_set', arguments: { key: 'TemporaryGain', value: 95.5 } });
     expect(invalid.isError).toBe(true);
+    const plan = await client.callTool({ name: 'katana_gen1_apply_tone', arguments: { name: 'metal' } });
+    expect(JSON.parse((plan.content as { text: string }[])[0].text)).toMatchObject({ dryRun: true, deviceIO: false });
+    const apply = await client.callTool({ name: 'katana_gen1_apply_tone', arguments: { name: 'metal', dryRun: false } });
+    expect(apply.isError).toBe(true);
   } finally { await client.close(); await server.close(); }
 });

@@ -77,19 +77,21 @@ describe('Gen 1 protocol (offline observed vectors)', () => {
 });
 
 describe('Gen 1 evidence and safety policy', () => {
-  it('has 11 operational and 9 explicit research reads with immutable metadata', () => {
-    expect(GEN1_PARAMETERS).toHaveLength(20);
-    expect(GEN1_PARAMETERS.filter(p => !p.research)).toHaveLength(11);
+  it('keeps panel/research reads and adds isolated source-backed temporary controls', () => {
+    expect(GEN1_PARAMETERS).toHaveLength(31);
+    expect(GEN1_PARAMETERS.filter(p => !p.research)).toHaveLength(22);
     expect(() => parameter('DelayTime')).toThrow('explicitResearch');
     expect(parameter('DelayTime', true).length).toBe(2);
     expect(() => parameter('PRMID_PATCH_AMP_VOLUME')).toThrow('Unknown');
     expect(Object.isFrozen(parameter('Volume').address)).toBe(true);
   });
-  it.each(GEN1_PARAMETERS.filter(p => p.key !== 'TemporaryGain'))('rejects all writes to $key', p => {
+  it.each(GEN1_PARAMETERS.filter(p => !p.rawRange))('rejects all writes to $key', p => {
     expect(() => validateWrite(p.key, 0)).toThrow('read-only');
   });
-  it.each([-1, 0, 94, 97, 127, 128, NaN, 95.5])('rejects unproven gain %s', n => expect(() => validateWrite('TemporaryGain', n)).toThrow());
-  it('accepts only the evidenced gain pair', () => {
+  it.each([-1, 121, 127, 128, NaN, 95.5])('rejects out-of-source-range gain %s', n => expect(() => validateWrite('TemporaryGain', n)).toThrow());
+  it('accepts editor-backed raw gain range, including the previously observed pair', () => {
+    expect(validateWrite('TemporaryGain', 0).key).toBe('TemporaryGain');
+    expect(validateWrite('TemporaryGain', 120).key).toBe('TemporaryGain');
     expect(validateWrite('TemporaryGain', 95).key).toBe('TemporaryGain');
     expect(validateWrite('TemporaryGain', 96).key).toBe('TemporaryGain');
   });
@@ -173,8 +175,8 @@ describe('Gen 1 mock integration (no native module or hardware)', () => {
     await expect(r.adapter.read('Volume')).rejects.toThrow('Device disconnected');
     expect(r.adapter.status()).toMatchObject({ connected: false, locked: true });
   });
-  it('does not send DT1 when pre-read gain is outside observed window', async () => {
-    const r = rig({ allowWrites: true, lowMasterConfirmed: true }); await r.adapter.connect(); r.setRaw(48);
+  it('does not send DT1 when pre-read gain is outside the source-backed range', async () => {
+    const r = rig({ allowWrites: true, lowMasterConfirmed: true }); await r.adapter.connect(); r.setRaw(121);
     await expect(r.adapter.write('TemporaryGain', 95)).rejects.toThrow('no DT1');
     expect(r.sent.filter(m => m[7] === 0x12)).toHaveLength(0);
   });

@@ -5,9 +5,13 @@ export interface Gen1Parameter {
   readonly address: readonly number[];
   readonly length: number;
   readonly research: boolean;
+  readonly rawRange?: readonly [number, number];
+  readonly writeValues?: readonly number[];
+  readonly writeMax?: number;
 }
 
-// Independent read evidence only. Raw PANEL codes are not active DSP controls.
+// Raw PANEL codes are not active DSP controls. See docs/gen1-write-support.md
+// for the separate shipped-editor and hardware evidence behind temporary controls.
 const panel = ['AmpType', 'PanelGain', 'Volume', 'Bass', 'Middle', 'Treble',
   'Presence', 'BoosterMod', 'DelayFx', 'Reverb'];
 const research: [string, number[], number][] = [
@@ -23,9 +27,29 @@ const research: [string, number[], number][] = [
 ];
 export const GEN1_PARAMETERS: readonly Gen1Parameter[] = Object.freeze([
   ...panel.map((key, i) => ({ key, address: [0, 0, 4, 0x20 + i], length: 1, research: false })),
-  { key: 'TemporaryGain', address: [0x60, 0, 0, 0x52], length: 1, research: false },
-  ...research.map(([key, address, length]) => ({ key, address, length, research: true })),
-].map(p => Object.freeze({ ...p, address: Object.freeze(p.address) })));
+  { key: 'TemporaryGain', address: [0x60, 0, 0, 0x52], length: 1, research: false, rawRange: [0, 120] },
+  ...research.map(([key, address, length]) => ({ key, address, length, research: true,
+    ...(key === 'NoiseSuppressorOn' ? { rawRange: [0, 1] } : {}),
+    ...(key === 'NoiseSuppressorThreshold' ? { rawRange: [0, 100] } : {}),
+  })),
+  // Only the five default amp algorithms, not all of the editor's hidden models.
+  { key: 'TemporaryAmpType', address: [0x60, 0, 0, 0x51], length: 1, research: false,
+    rawRange: [0, 27], writeValues: [1, 8, 11, 24, 23] },
+  ...['Bass', 'Middle', 'Treble', 'Presence', 'Level'].map((name, i) => ({
+    key: `Temporary${name}`, address: [0x60, 0, 0, 0x54 + i], length: 1, research: false,
+    rawRange: [0, 100], ...(name === 'Level' ? { writeMax: 10 } : {}),
+  })),
+  ...([
+    ['BoosterOn', [0x60, 0, 0, 0x30]], ['ModOn', [0x60, 0, 1, 0x40]],
+    ['FxOn', [0x60, 0, 3, 0x4c]], ['DelayOn', [0x60, 0, 5, 0x60]],
+    ['ReverbOn', [0x60, 0, 6, 0x10]],
+  ] as [string, number[]][]).map(([key, address]) => ({
+    key, address, length: 1, research: false, rawRange: [0, 1],
+  })),
+].map(p => Object.freeze({ ...p, address: Object.freeze(p.address),
+  ...('rawRange' in p ? { rawRange: Object.freeze(p.rawRange) as readonly [number, number] } : {}),
+  ...('writeValues' in p ? { writeValues: Object.freeze(p.writeValues) } : {}),
+})) as Gen1Parameter[]);
 
 export function parameter(key: string, explicitResearch = false): Gen1Parameter {
   const found = GEN1_PARAMETERS.find(p => p.key === key);
@@ -37,10 +61,16 @@ export function parameter(key: string, explicitResearch = false): Gen1Parameter 
 
 export function validateWrite(key: string, value: number): Gen1Parameter {
   const p = parameter(key, true);
-  // No inferred 0..100 range, volume ceiling, NS1 workflow, patch or system writes.
-  if (key !== 'TemporaryGain')
-    throw new Gen1Error(`${key} is read-only. Volume writes are disabled: no evidenced safe limit.`);
-  if (!Number.isInteger(value) || (value !== 95 && value !== 96))
-    throw new Gen1Error('TemporaryGain supports only the observed experimental raw window 95..96.');
+  if (!p.rawRange) throw new Gen1Error(`${key} is read-only; no system, patch save or firmware writes.`);
+  validateCurrent(p, value);
+  if (p.writeValues && !p.writeValues.includes(value))
+    throw new Gen1Error(`${key} supports only default raw amp codes: ${p.writeValues.join(', ')}.`);
+  if (p.writeMax !== undefined && value > p.writeMax)
+    throw new Gen1Error(`${key} exceeds software output ceiling ${p.writeMax}; keep physical MASTER low.`);
   return p;
+}
+
+export function validateCurrent(p: Gen1Parameter, value: number): void {
+  if (!p.rawRange || !Number.isInteger(value) || value < p.rawRange[0] || value > p.rawRange[1])
+    throw new Gen1Error(`${p.key} raw value must be in ${p.rawRange?.join('..')}; no DT1 sent for this value.`);
 }

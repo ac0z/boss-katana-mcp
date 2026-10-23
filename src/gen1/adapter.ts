@@ -1,4 +1,5 @@
-import { GEN1_PARAMETERS, parameter, validateWrite } from './parameters.js';
+import { GEN1_PARAMETERS, parameter, validateWrite, validateCurrent, type Gen1Parameter } from './parameters.js';
+import { tonePlan } from './tones.js';
 import { decodeData, encodeData, encodeRead, Gen1Error, identityRequest, verifyIdentity } from './protocol.js';
 
 export interface MidiPorts { inputs: string[]; outputs: string[] }
@@ -36,6 +37,7 @@ export interface Gen1Adapter {
   disconnect(): Promise<object>;
   read(key: string, research?: boolean): Promise<object>;
   write(key: string, value: number): Promise<object>;
+  applyTone(name: string, outputLevel?: number, dryRun?: boolean): Promise<object>;
 }
 
 export class Gen1MidiAdapter implements Gen1Adapter {
@@ -66,13 +68,14 @@ export class Gen1MidiAdapter implements Gen1Adapter {
   status(): object {
     return { backend: 'gen1-midi', experimental: true, hardwareEnabled: !!this.options.hardwareEnabled,
       connected: !!this.connection, locked: this.locked, modelConfirmedByOperator: !!this.options.modelConfirmed,
-      firmware: 'unknown', volumeWrites: false, writesEnabled: !!this.options.allowWrites && !!this.options.lowMasterConfirmed,
+      firmware: 'unknown', volumeWrites: false, temporaryLevelWriteCeiling: 10,
+      writesEnabled: !!this.options.allowWrites && !!this.options.lowMasterConfirmed,
       warning: 'Cached connection state; physical liveness is checked by explicit I/O. MIDI identity cannot prove KATANA-50 submodel.' };
   }
 
   listParams(): object {
     return GEN1_PARAMETERS.map(p => ({ ...p, encoding: 'unsigned 7-bit big-endian',
-      range: null, writable: p.key === 'TemporaryGain' ? 'experimental raw 95..96 with opt-in and readback' : false }));
+      range: p.rawRange ?? null, writable: p.rawRange ? 'experimental; explicit write/low-MASTER opt-ins and readback' : false }));
   }
 
   discover(): Promise<object> {
@@ -117,18 +120,75 @@ export class Gen1MidiAdapter implements Gen1Adapter {
     const p = validateWrite(key, value);
     return this.serial(async () => {
       this.requireConnection();
-      if (!this.options.allowWrites || !this.options.lowMasterConfirmed)
-        throw new Gen1Error('Writes disabled. Explicit KATANA_GEN1_ALLOW_WRITES=1 and KATANA_GEN1_LOW_MASTER_CONFIRMED=1 required.');
-      try {
-        const before = await this.readRaw(p.address, p.length);
-        if (before !== 95 && before !== 96)
-          throw new Gen1Error('Current gain is outside evidenced 95..96 window; no DT1 sent.');
-        if (before !== value) await this.connection!.send(encodeData(p.address, [value]));
-        const after = await this.readRaw(p.address, p.length);
-        if (after !== value) throw new Gen1Error('Readback mismatch: amp state uncertain; no automatic rollback or retry.');
-        return { key, before, raw: after, readbackVerified: true, experimental: true, savedToPatch: false };
-      } catch (e) { return this.fault(e); }
+      this.requireWrites();
+      try { return await this.writeVerified(p, value); }
+      catch (e) { return this.fault(e); }
     });
+  }
+
+  applyTone(name: string, outputLevel = 5, dryRun = true): Promise<object> {
+    const plan = tonePlan(name, outputLevel);
+    const changes = plan.changes.map(c => ({ ...c, p: validateWrite(c.key, c.value) }));
+    const level = validateWrite('TemporaryLevel', outputLevel);
+    // Planning never touches ports, even if connected or write-enabled.
+    if (dryRun) return Promise.resolve({ ...plan, dryRun: true, deviceIO: false });
+    return this.serial(async () => {
+      this.requireConnection(); this.requireWrites();
+      const before: Record<string, number> = {};
+      const completed: object[] = [];
+      let stage = 'preflight', writesStarted = false;
+      try {
+        // Capture every original value before the first write. Abort on unknown state.
+        for (const p of [level, ...changes.map(c => c.p)]) {
+          const raw = await this.readRaw(p.address, p.length);
+          before[p.key] = raw; validateCurrent(p, raw);
+        }
+        const finalLevel = Math.min(before.TemporaryLevel, outputLevel);
+        stage = 'reduce-level'; writesStarted = true;
+        completed.push(await this.writeVerified(level, 0));
+        for (const { p, value } of changes) {
+          stage = p.key;
+          completed.push(await this.writeVerified(p, value));
+          // Detect knob changes or model-switch side effects before proceeding.
+          if (await this.readRaw(level.address, 1) !== 0)
+            throw new Gen1Error('Temporary LEVEL changed during tone application; stopped. Keep physical MASTER low.');
+        }
+        stage = 'verify-complete-tone';
+        for (const { p, value } of changes) {
+          if (await this.readRaw(p.address, p.length) !== value)
+            throw new Gen1Error(`Final readback mismatch: ${p.key}.`);
+        }
+        stage = 'restore-limited-level';
+        completed.push(await this.writeVerified(level, finalLevel));
+        return { ...plan, dryRun: false, before, completed, finalLevel,
+          readbackVerified: true, atomicSnapshot: false, savedToPatch: false, audibleResultVerified: false };
+      } catch (e) {
+        return this.fault(new Gen1Error(JSON.stringify({ operation: 'applyTone', stage,
+          before, completed, writesStarted, savedToPatch: false,
+          error: e instanceof Error ? e.message : String(e),
+          recovery: 'Partial state possible; no automatic retry or rollback. Inspect device and recorded original values.' })));
+      }
+    });
+  }
+
+  private requireWrites(): void {
+    if (!this.options.allowWrites || !this.options.lowMasterConfirmed)
+      throw new Gen1Error('Writes disabled. Explicit KATANA_GEN1_ALLOW_WRITES=1 and KATANA_GEN1_LOW_MASTER_CONFIRMED=1 required.');
+  }
+
+  private async writeVerified(p: Gen1Parameter, value: number): Promise<object> {
+    const before = await this.readRaw(p.address, p.length);
+    validateCurrent(p, before);
+    if (before !== value) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([this.connection!.send(encodeData(p.address, [value])),
+          new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Gen1Error('MIDI write timeout; delivery uncertain.')), this.timeoutMs); })]);
+      } finally { clearTimeout(timer); }
+    }
+    const after = await this.readRaw(p.address, p.length);
+    if (after !== value) throw new Gen1Error(`Readback mismatch: ${p.key}; amp state uncertain; no automatic rollback or retry.`);
+    return { key: p.key, before, raw: after, readbackVerified: true, experimental: true, savedToPatch: false };
   }
 
   private requireConnection(): void {
