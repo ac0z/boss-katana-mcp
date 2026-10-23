@@ -51,6 +51,16 @@ it('enforces the output ceiling and keeps all panel/system fields read-only', ()
   expect(() => validateWrite('TemporaryLevel', 11)).toThrow('ceiling');
   for (const key of ['Volume', 'PanelGain', 'AmpType', 'Bass', 'Reverb', '7F000104']) expect(() => validateWrite(key, 0)).toThrow();
 });
+it.each(['DelayLevel', 'ReverbLevel'])('bounds $0 writes independently of the full source range', async key => {
+  expect(validateWrite(key, 0)).toBeDefined();
+  expect(validateWrite(key, 30)).toBeDefined();
+  for (const value of [-1, 31, 100, NaN, 1.5]) expect(() => validateWrite(key, value)).toThrow();
+  const r = rig(); await r.adapter.connect();
+  const h = createGen1Handlers(r.adapter);
+  expect((await h.set({ key, value: 15 })).isError).toBeUndefined();
+  expect(r.memory.get(r.addr(key))).toBe(15);
+  expect(r.memory.get(r.addr('TemporaryLevel'))).toBe(49);
+});
 it('defaults to a zero-I/O plan even without hardware or write permissions', async () => {
   const r = rig({ hardwareEnabled: false, allowWrites: false });
   expect(await r.adapter.applyTone('metal')).toMatchObject({ dryRun: true, deviceIO: false });

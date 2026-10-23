@@ -84,6 +84,8 @@ def inspect(root):
         ('TemporaryTreble', 'PREAMP A: TREBLE', 'preamp_a_treble', 0x911630, 0x911645, 100),
         ('TemporaryPresence', 'PREAMP A: PRESENCE', 'preamp_a_presence', 0x91166f, 0x911684, 100),
         ('NoiseSuppressorThreshold', 'NS1: THRESHOLD', 'ns1_threshold', 0x91a25d, 0x91a272, 100),
+        ('ReverbLevel', 'REVERB: EFFECT LEVEL', 'reverb_effect_level', 0x919a16, 0x919a2b, 100),
+        ('DelayLevel', 'DELAY: EFFECT LEVEL', 'delay_effect_level', 0x9185a2, 0x9185b7, 120),
     ]
     entries = json.loads(address_bytes)['temporary']
     for key, label, identifier, id_offset, range_offset, maximum in rows:

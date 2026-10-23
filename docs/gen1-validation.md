@@ -4,6 +4,18 @@ Date: 2026-10-23 (Europe/Istanbul). Windows, Node v24.14.1, Vitest v4.1.12.
 Base: upstream/main `56b6d13786be00e31db650c3923bf047726f5ad9`.
 Branch: `feat/katana-gen1-support`.
 
+## Subsequent user-commanded metal and delay/reverb changes
+
+2026-10-23 22:01–22:04: metal reapplication passed 70 RQ1 / seven DT1; the
+requested effect toggles passed two DT1 but exposed ReverbLevel zero. A small
+source-verified wet-level extension then set DelayLevel 0→15 and ReverbLevel
+0→15, with two DT1 / 18 RQ1; both ON flags remained 1 and main LEVEL stayed 5.
+No patch save, firmware, physical fault test or audio measurement was performed.
+Build PASS; `npm test` **139 PASS / 49 SKIPPED**. All original runnable Gen 3
+checks pass. The nine-field offline source verifier passed both new level
+definitions; no runtime dependency changed. Evidence and the exact runtime
+parameter extension bytes are retained with [the command log](gen1-user-command-log.md).
+
 ## Later approved temporary-tone extension
 
 The table and security scan below describe the earlier read-only contribution.

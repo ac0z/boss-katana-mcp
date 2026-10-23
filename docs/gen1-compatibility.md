@@ -62,11 +62,11 @@ as unknown protocol bytes and are not decoded into an invented firmware version.
 
 This original 20-field allowlist remains available. The later effective controls
 add `TemporaryAmpType`, `TemporaryBass/Middle/Treble/Presence/Level` and
-`BoosterOn/ModOn/FxOn/DelayOn/ReverbOn`: 31 readable keys overall, observed across
+`BoosterOn/ModOn/FxOn/DelayOn/ReverbOn` and `DelayLevel`: 32 readable keys overall, observed across
 two separate sessions rather than one atomic snapshot. The original nine research
 reads retain their explicit-research gate.
 
-`list_params` reports source-defined raw bounds for the 14 effective writable
+`list_params` reports source-defined raw bounds for the 16 effective writable
 fields and null for the others. [Write support](gen1-write-support.md) records
 all addresses, default amp codes, numeric limits and source offsets. There is no
 patch-name, saved-channel, Booster/Mod algorithm selection, save or firmware API.

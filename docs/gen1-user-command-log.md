@@ -88,3 +88,48 @@ Kanıtlar: `boss-katana-mcp/docs/evidence/gen1-metal-2026-10-23/`.
 Bağımsız salt okunur doğrulama: `python scripts/Verify-Gen1MetalEvidence.py` PASS.
 Audit SHA-256: `839070b752665da3a12c4e6be77bc02423b1ef46634130ec7a79db1bfa301bf8`.
 Ayrıntılı rapor: `boss-katana-mcp/docs/gen1-hardware-metal-2026-10-23.md`.
+
+
+## 3. Kullanıcı komutu: “metal tonu yap”
+
+2026-10-23 22:01 (Europe/Istanbul). Önceki açık yazma onayı ve düşük MASTER
+teyidi geçerlidir. Doğrulanmış kaynak/build hash'leri eşleşti; ek bağımsız test
+başlatılmadı. Gerçek MCP üzerinden metal planı önizlendi, keşif/kimlik doğrulandı,
+plan bir kez uygulandı ve bağlantı kapatıldı. **PASS**: 1 inquiry, 70 RQ1,
+**7 DT1**, 71 RX; engellenen TX ve cleanup hatası yok. Ham hedefler: Brown 23,
+Gain 85, Bass 60, Middle 40, Treble 65, Presence 45, NS1 ON/55; efektler OFF.
+LEVEL 28→0→5; Presence 45 ve NS1 Threshold 55 zaten eşleştiğinden DT1 atlandı.
+Bu ön değerlerin önceki oturumdan neden farklı olduğu araştırılmadı.
+Kanıt: `katana-evidence/gen1-metal-command-20261023-2201/`.
+Audit SHA-256: `7713389b9809f7fc16470aa7ebb8af6c6dbf9b048e1c86240aee3585a8520bda`.
+
+## 4. Kullanıcı komutu: “delay ekle ve reverb”
+
+2026-10-23 22:02–22:04 (Europe/Istanbul). Önce iki açma anahtarı yazıldı:
+DelayOn 0→1 ve ReverbOn 0→1, ikisi de geri okumayla doğrulandı. **PASS**:
+1 inquiry, 11 RQ1, 2 DT1, 12 RX. Fakat ReverbLevel **0** okundu; yalnız
+anahtarı açmak, duyulur reverb eklenmesini sağlamaz. Bu sınırlama kullanıcıya
+bildirildi; bu ilk aşama tek başına duyulur reverb başarısı olarak sayılmaz.
+
+Kurulu BTS'nin SWF tanımlarından `reverb_effect_level` (FWS id 0x919a16,
+min/max 0x919a2b: 0..100) ve `delay_effect_level` (id 0x9185a2,
+min/max 0x9185b7: 0..120) doğrulandı. Adresler temporary haritasında
+Reverb `60 00 06 18`, Delay `60 00 05 66` olarak doğrulandı. Yeni yazma yolu
+her iki efekt seviyesi için **0..30 yazılım tavanıyla** sınırlandı; kaynak
+aralığı, akustik güvenlik garantisi sayılmadı. Unit/mock testleri ve build geçti:
+**139 PASS / 49 SKIPPED**; gerçek Gen 3 testi yapılmadı.
+
+İkinci MCP oturumunda mevcut anahtarlar tekrar doğrulandı ve efekt seviyeleri
+ham **15** yapıldı. Delay/Reverb ON son okumaları 1, DelayLevel/ReverbLevel
+son okumaları 15; TemporaryLevel başlangıçta ve sonda 5. Bu aşamada yalnız iki
+seviye DT1'i gönderildi; 1 inquiry, 18 RQ1, 2 DT1, 19 RX, temiz disconnect.
+DelayTime 456 ve DelayFeedback 35 okundu; bu iki parametreye yazılmadı.
+Efekt algoritmaları değiştirilmedi. Ses kaydı/dinleme yapılmadı.
+
+Kanıtlar: `katana-evidence/gen1-delay-reverb-command-20261023-2202/` ve
+`katana-evidence/gen1-delay-reverb-levels-command-20261023-2204/`.
+Son audit SHA-256: `e0676644ca41e9af7e93a7b81138152b9f0a291490932274d28bb3ff54b175ea`.
+İkinci oturumun raporundaki sourceRevision geliştirme öncesi HEAD'dir; yeni
+parametre dosyasının kaynak/derlenmiş baytları, hash'leri ve farkı ayrıca
+`source-snapshot.json` ile korunur. Rapor geriye dönük değiştirilmedi.
+Patch save / firmware / otomatik retry / rollback: **Yok**.

@@ -9,7 +9,7 @@ amp volume. Do not set `KATANA_E2E=1` during offline checks.
 
 `test/gen1.test.ts` covers captured RQ1/DT1 vectors and checksum edge cases,
 integer/7-bit/size validation, exact device/model/address/length matching,
-identity rejection, raw two-byte decoding, all 31 permitted reads, explicit
+identity rejection, raw two-byte decoding, all 32 permitted reads, explicit
 research gating, panel/system write rejection and source-bounded effective writes.
 Mock integrations cover default-disabled I/O, missing model attestation,
 ambiguous/missing ports, unsupported identity, readback mismatch, unplug errors,
@@ -20,6 +20,9 @@ clean reconnect and irreversible fault lock. No full patch or firmware test exis
 codes, numeric/toggle/LEVEL validation, all write gates, full backup preflight,
 non-increasing final LEVEL, serialization, partial errors, uncertain send timeout,
 LEVEL drift and later changes invalidating earlier targets before LEVEL rises.
+It also checks the separate wet-level ceiling, actual MCP handler writes for
+Delay/Reverb levels and preservation of main LEVEL. The later requested effect
+command passed ON/15 readbacks; audible quality and full ranges remain unverified.
 
 `test/gen1-native.test.ts` injects native classes to cover enumeration cleanup,
 partial-open failure, SysEx configuration, listener-before-send, listener removal,

@@ -78,8 +78,8 @@ describe('Gen 1 protocol (offline observed vectors)', () => {
 
 describe('Gen 1 evidence and safety policy', () => {
   it('keeps panel/research reads and adds isolated source-backed temporary controls', () => {
-    expect(GEN1_PARAMETERS).toHaveLength(31);
-    expect(GEN1_PARAMETERS.filter(p => !p.research)).toHaveLength(22);
+    expect(GEN1_PARAMETERS).toHaveLength(32);
+    expect(GEN1_PARAMETERS.filter(p => !p.research)).toHaveLength(23);
     expect(() => parameter('DelayTime')).toThrow('explicitResearch');
     expect(parameter('DelayTime', true).length).toBe(2);
     expect(() => parameter('PRMID_PATCH_AMP_VOLUME')).toThrow('Unknown');

@@ -1,5 +1,27 @@
 # Experimental Gen 1 temporary tone writes
 
+## Later delay/reverb level extension — 22:04, 2026-10-23
+
+The operator's subsequent `delay ekle ve reverb` command exposed zero wet levels:
+turning the effects on alone could not produce an audible effect. The pinned
+editor defines `delay_effect_level` at FWS id `0x9185a2`, min/max `0x9185b7`
+as 0..120; `reverb_effect_level` at id `0x919a16`, min/max `0x919a2b` is 0..100.
+The existing offline source verifier now checks both definitions and their
+temporary map addresses; [the nine-field result](gen1-effect-level-source-evidence.json)
+is retained. `DelayLevel` (`60 00 05 66`) is a new readable/writable key;
+`ReverbLevel` (`60 00 06 18`) retains explicit research gating for reads and now
+supports writes. Each permits only integers 0..30 as an application policy.
+There are now 32 readable keys and 16 bounded writable effective controls.
+
+The explicitly requested manual command read both levels as zero, set each to
+raw 15 and verified both ON flags remained 1. LEVEL stayed 5. Initial toggles
+used two DT1; the subsequent wet-level session used two DT1 and 18 RQ1, with
+clean disconnect. DelayTime 456 and Feedback 35 were read, not changed. This
+qualifies those values on this session only; audio was not measured. See the
+[user command log](gen1-user-command-log.md) and
+[retained captures](evidence/gen1-commands-2026-10-23-2201/manifest.json).
+The earlier metal-session report below remains a separate historical result.
+
 2026-10-23. The operator requested a metal tone, explicitly approved hardware
 writes and confirmed low physical MASTER. This authorizes this manual session;
 normal startup still disables hardware and writes. Patch save and firmware

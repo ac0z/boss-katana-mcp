@@ -1,4 +1,4 @@
-# PR draft — not submitted
+# PR draft â€” not submitted
 
 Title: **Add experimental KATANA-50 Gen 1 MIDI controls and a guarded metal-tone tool**
 
@@ -8,8 +8,8 @@ adds a separately selected `KATANA_BACKEND=gen1` MIDI adapter with eight isolate
 unchanged. Hardware and writes are disabled by default.
 
 The adapter discovers a unique KATANA pair, checks the observed Roland identity
-plus operator model attestation, reads 31 raw fields and permits source-bounded
-writes only to 14 effective controls. It rejects system/panel, arbitrary-address,
+plus operator model attestation, reads 32 raw fields and permits source-bounded
+writes only to 16 effective controls. It rejects system/panel, arbitrary-address,
 patch-save and firmware writes. Strict framing/checksum/readback validation,
 serialization, bounded sends and an irreversible uncertainty latch prevent
 automatic retries or rollback after a questionable transaction.
@@ -22,19 +22,20 @@ capped at 10; this is a software policy, not an acoustic safety guarantee.
 
 Source facts come from the operator's earlier evidence, pinned installed BTS
 definitions and attributed original protocol measurements. No unlicensed local
-implementation or proprietary Roland asset is copied. The optional MIDI runtime
+implementation or proprietary Roland asset is copied. The requested delay/reverb extension also supports wet levels 0..30; raw 15
+for both effects passed readback with LEVEL unchanged at 5. The optional MIDI runtime
 dependency is MIT; no dependency was added for the tone extension.
 
 Validation:
 
 - `npm run build`: **PASS**.
-- `npm test`: **138 PASS, 49 SKIPPED**; original runnable Gen 3 checks pass.
-- `npm run test:gen1`: **117 PASS**, including real SDK/mock integrations.
+- `npm test`: **139 PASS, 49 SKIPPED**; original runnable Gen 3 checks pass.
+- `npm run test:gen1`: **118 PASS**, including real SDK/mock integrations.
 - `npm audit --omit=dev`: zero reported vulnerabilities.
 - Static BTS definition checks: **PASS**, no device access.
 - Initial read-only physical session: **PASS**, 20 addresses / 23 RQ1, zero DT1.
 - Later explicitly approved metal session: **PASS**, identity + 70 RQ1 + nine
-  effective DT1 writes, exact target readback, LEVEL 28→0→5 and clean disconnect.
+  effective DT1 writes, exact target readback, LEVEL 28â†’0â†’5 and clean disconnect.
   Six unchanged fields skipped writes. Retained raw traces and independent
   offline verifiers support both sessions.
 - Four offline tamper variants rejected. Original local source/evidence hashes
