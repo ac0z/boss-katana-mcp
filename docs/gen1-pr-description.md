@@ -30,6 +30,8 @@ separate hardware plan are documented.
 - [x] `npm audit --omit=dev` — zero known vulnerabilities at validation time.
 - [x] Original runnable Gen 3 tests remain passing; default tool registration and
   status/connect are also checked with a mock BTS client.
+- [x] Static security diff review — zero reportable findings; native driver and
+  physical device behavior remain outside the exercised scope.
 - [ ] Tried on a real amp — **NOT RUN**. No port opened or hardware test executed.
 - [ ] Full installed-BTS Gen 3 sandbox and physical regression — **SKIPPED**.
 

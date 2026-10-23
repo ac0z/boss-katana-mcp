@@ -20,7 +20,9 @@ Branch: `feat/katana-gen1-support`.
 | `npm audit --omit=dev` | PASS | Zero reported known vulnerabilities |
 | `git diff --check` | PASS | No whitespace errors |
 | Source/dependency license review | PASS with scope limit | MIT upstream, MIT native library/RtMidi, MIT native helper dependencies and 0BSD tslib; unlicensed local source not copied; no Roland assets copied |
-| Security diff scan | PENDING | Separate review follows the implementation commits |
+| Security diff scan | PASS within static scope | Completed scan 6c6f0229-3f4b-41a4-9401-bcd806a04ada; zero reportable findings, 8 source/manifest files plus supporting changes inspected. Hardware and third-party native implementations not audited. |
+| Local project preservation | PASS | All 24 recorded source/evidence hashes rechecked unchanged; original untracked Git status preserved |
+| Fork publication | PASS | Authenticated GitHub connector published the requested feature branch; fetched remote and verified identical Git tree |
 
 No skipped tests are counted as successful. No Gen 1 hardware compatibility is
 established by passing mocks or the old TONEFORGE evidence. Tests use only fake
@@ -40,3 +42,42 @@ are retained in `gen1-source-manifest.json` for later read-only comparison.
   manifest, validation and unsubmitted PR-description documents.
 
 No existing Gen 3 source module other than the entry-point registration changed.
+
+## Security review evidence
+
+Codex Security `security-diff-scan` reviewed the immutable original local range
+`56b6d13786be00e31db650c3923bf047726f5ad9..6b691b8b503d1cc3a34e2c481c858c5601393ea6`.
+Preflight passed without config edits. An independent architecture pass and the
+parent's complete changed-source inspection found no reportable candidate.
+Canonical report, coverage, threat model and SARIF are retained locally by the
+plugin under scan ID `6c6f0229-3f4b-41a4-9401-bcd806a04ada`.
+
+The host reported 5,945,944 total context/output tokens across three threads,
+including 5,749,120 cached-input tokens. This is the plugin's rollout accounting,
+not a separately measured billing amount. Daybreak status was granted with
+Daybreak Blue available. No finding validation/attack-path phase was needed
+because discovery returned no plausible candidates. Passing static review is
+not proof of native-driver safety or hardware compatibility.
+
+This final validation/PR-description update is documentation only and follows
+the scanned snapshot; no runtime source was changed after that review.
+
+## Git publication evidence
+
+Direct HTTPS `git push --dry-run` failed because the shell has no GitHub
+credentials and interactive prompts were disabled. The already connected GitHub
+account had write permission to `karmasis-alicem-ozkara/boss-katana-mcp`, so the
+same logical commits were published through its Git database API. Commit metadata
+changed, but each remote tree SHA was checked against its local counterpart.
+
+| Change | Original local commit | Published commit |
+| --- | --- | --- |
+| Protocol, MIDI adapter and tests | 1a1d7919a00f6cdbb74bfd87979af0d19ff148ff | 292bf90b2463831349663e29d355a55dfe44d001 |
+| MCP backend integration | 079262f7173a460f3dce92c49c4bb8d183491152 | 7b74169e854899797e66a9a619ef93b02e4c5521 |
+| Compatibility and evidence docs | 6b691b8b503d1cc3a34e2c481c858c5601393ea6 | cd9e9728c1723f058e433190019c5d63f3eabeb0 |
+
+Reviewed and published snapshot tree: `f23d46f8e6ea469dbde45bb3329f8b006394210d`.
+The clean local feature branch was aligned to the fetched published commits only
+after equality checks; file contents were not reset or overwritten. Both remotes
+retain their expected fork/upstream URLs. No upstream branch, issue or PR was
+created. A final evidence-only documentation commit follows these three commits.
