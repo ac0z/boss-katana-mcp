@@ -17,6 +17,12 @@ gain 95/96 write/readback infrastructure are included. Hardware is disabled by
 default; physical writes require additional startup opt-ins. Volume, effects,
 patch save and firmware writes are blocked.
 
+The adapter/native read-only path has since passed one explicitly authorized
+physical run: observed identity, 20 unique addresses / 23 RQ1, matching sentinels
+and clean disconnect. Its six original capture files, SHA-256 manifest and
+independent offline verifier are included. **Writes remain hardware-unverified;
+write tests stay disabled.** No runtime safety gate or parameter range changed.
+
 The optional MIT native MIDI dependency is lazy-loaded. Local C#/PowerShell or
 Roland code is not copied. Source references, hashes, compatibility limits and a
 separate hardware plan are documented.
@@ -32,7 +38,12 @@ separate hardware plan are documented.
   status/connect are also checked with a mock BTS client.
 - [x] Static security diff review — zero reportable findings; native driver and
   physical device behavior remain outside the exercised scope.
-- [ ] Tried on a real amp — **NOT RUN**. No port opened or hardware test executed.
+- [x] Physical read-only adapter/native run — **PASS**, one operator-labelled
+  KATANA-50 Gen 1, firmware unknown, Windows x64 / Node 24.14.1 / MIDI 3.8.1.
+  23/23 reads over 20 addresses; one inquiry + 23 RQ1; zero outgoing DT1.
+- [x] Retained evidence reverified offline — six files hashed and original
+  verifier result reproduced without hardware access.
+- [ ] Physical write, patch-save, firmware and unplug/reconnect tests — **DISABLED / NOT RUN**.
 - [ ] Full installed-BTS Gen 3 sandbox and physical regression — **SKIPPED**.
 
 Security review outcome and final validation evidence are in
@@ -40,8 +51,9 @@ Security review outcome and final validation evidence are in
 
 ## Known limitations
 
-Experimental and hardware-unverified. Observed identity and USB PID do not prove
-the 50 submodel; operator confirmation is required. Firmware and full ranges are
+Experimental; read-only verified only on the recorded device/session. Writes
+remain hardware-unverified. Observed identity and USB PID do not prove the 50
+submodel; operator confirmation is required. Firmware and full ranges are
 unknown. PANEL codes are not active DSP settings, and reads are not atomic patch
 snapshots. Gain support is restricted to one observed raw pair and leaves the
 requested temporary value in place; it is not the local project's restore test.

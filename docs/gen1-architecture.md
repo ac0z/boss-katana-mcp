@@ -64,6 +64,17 @@ implemented here. Wrong or unrelated SysEx conservatively faults the session.
 Unsolicited same-address notifications cannot be distinguished from RQ1 responses
 by this protocol. Matching readback is not a formal ACK or persistence proof.
 
+## Read-only physical qualification
+
+The existing adapter/native path at revision
+`c5ac085f1849157e8fcddfdc30e388bf6cf31540` passed an explicitly authorized physical
+read-only run on 2026-10-23: observed identity, 20 unique addresses / 23 reads,
+matching sentinels and clean disconnect. The harness used the existing adapter
+with real native classes and an exact outgoing identity/RQ1 guard. It did not
+exercise physical MCP stdio, unplug/reconnect or write behavior. No runtime
+source or safety gate changed. Full evidence, source/build hashes, raw values and
+limitations are in the [hardware report](gen1-hardware-readonly-2026-10-23.md).
+
 ## Local application analysis (read-only)
 
 Source root supplied by the operator: `C:/Users/ozkar/Documents/ChatGPT/musicplayer`.

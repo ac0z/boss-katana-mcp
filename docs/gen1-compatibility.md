@@ -1,9 +1,17 @@
-# KATANA-50 Gen 1 compatibility — experimental / unverified
+# KATANA-50 Gen 1 compatibility — experimental; read-only verified on one device
 
-Date: 2026-10-23. This contribution has **not been exercised against hardware**.
-The user's TONEFORGE records from 2026-10-20 establish protocol facts on one
-operator-labelled KATANA-50; firmware version is unknown. They do not prove
-compatibility of this new Node native transport, other Katana models or firmware.
+Date: 2026-10-23. **The new Node/native adapter's read-only path was exercised
+successfully on one operator-labelled KATANA-50 Gen 1.** Discovery, observed
+identity, 20 unique addresses, 23/23 RQ1 transactions, three matching start/end
+sentinels and clean disconnect passed. Only one identity inquiry and 23 RQ1 were
+sent; no outgoing DT1, patch-save or firmware command was sent. See the
+[physical test report and retained evidence](gen1-hardware-readonly-2026-10-23.md).
+
+The earlier TONEFORGE records from 2026-10-20 supplied the protocol facts; the new
+test separately establishes this adapter's read-only behavior for this device and
+session. Firmware remains unknown. Other models/firmware, physical fault recovery
+and writes remain unverified. **Write tests remain disabled**, and startup gates,
+write range and blocked operations have not been changed by this qualification.
 
 ## Evidence profile
 
@@ -63,7 +71,9 @@ node dist/index.js
 ```
 
 Keep the following variables absent unless the operator deliberately authorizes
-hardware use. This task did not set them or run device operations.
+hardware use. The recorded physical test explicitly passed hardware/model options
+to a guarded adapter instance; both write-related options were false. This
+documentation/evidence update performs no additional device operations.
 
 | Environment variable | Exact enabling value | Purpose |
 | --- | --- | --- |
@@ -75,8 +85,10 @@ hardware use. This task did not set them or run device operations.
 No tool can change these startup gates. Setting only `KATANA_BACKEND=gen1` opens
 no ports and does not import native MIDI. Setting hardware opt-in does not send
 anything until an explicit discovery/connect/read tool call. Native dependency
-installation is `npm install` (optional dependency); native platform availability
-and driver compatibility remain unverified.
+installation is `npm install` (optional dependency). The recorded Windows x64 /
+Node 24.14.1 / MIDI 3.8.1 read path passed on this host; other architectures,
+drivers and fault scenarios remain unverified. Keep both write-related flags
+absent throughout read-only qualification.
 
 `katana_gen1_set` accepts only `TemporaryGain` and integer `95` or `96`, requires
 both write gates and a connection, pre-reads that same window, sends at most one

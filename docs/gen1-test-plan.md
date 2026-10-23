@@ -25,11 +25,23 @@ Gen 3 status/connect handlers, isolated Gen 1 registration and invalid backend
 rejection. The original Gen 3 suites remain intact. Their BTS sandbox tests skip
 when the Gen 3 UI bundle is absent; skips must never be reported as passes.
 
-## Manual hardware qualification — NOT RUN / requires separate approval
+Recheck the committed physical trace without accessing hardware:
 
-There is no automatic hardware runner in this contribution. Perform each stage
-only with the operator's explicit approval for that stage and retain raw TX/RX,
-model label, driver/Node/native dependency versions and timestamps as evidence.
+```powershell
+python scripts/Verify-Gen1ReadOnlyEvidence.py
+```
+
+This hashes the six retained capture files and reruns their independent verifier
+in disposable storage. It does not execute the captured native MIDI harness.
+
+## Manual hardware qualification — read-only run completed; writes disabled
+
+The [2026-10-23 physical run](gen1-hardware-readonly-2026-10-23.md) passed discovery,
+identity, all 20 allowed addresses (23 transactions including sentinels) and clean
+disconnect on one operator-labelled KATANA-50 Gen 1. The captured manually gated
+harness is retained for audit and is not registered in npm tests or an automation.
+Repeating any hardware stage requires the operator's explicit authorization;
+retain raw TX/RX, model label, driver/Node/native dependency versions and timestamps.
 
 1. Confirm physical KATANA-50 Gen 1 label, firmware if discoverable without
    changing it, driver and USB cabling. Close BTS, TONEFORGE and other MIDI clients.
@@ -42,11 +54,9 @@ model label, driver/Node/native dependency versions and timestamps as evidence.
 4. Approve unplug/reconnect testing. Unplug during a read; prove timeout releases
    resources, locks queued commands and sends no retries. Inspect state, reconnect
    USB and restart the server. Confirm clean disconnect/reconnect separately.
-5. Only after a separate **explicit write approval**, set physical MASTER low,
-   retain original gain and confirm it is raw 95 or 96. Enable both write gates,
-   request one adjacent temporary gain value and inspect RQ1 readback. If the
-   operator approves restoration, request the original value and verify again.
-   Stop immediately on mismatch or uncertainty; no automated recovery writes.
+5. **Write qualification is disabled and outside this test plan.** Keep both
+   write-related gates closed. Any future write experiment requires a separate
+   task and explicit approval; this read-only result grants no write authority.
 6. Separately qualify delayed unsolicited messages, fragmented SysEx, duplicate
    notifications, long driver calls and cross-process WinMM ownership. These are
    known limitations of this initial transport, not already-passed tests.
@@ -60,4 +70,6 @@ Baseline before implementation: build PASS; 21 tests PASS, 49 SKIPPED. The skipp
 tests require the Gen 3 BTS installation (48) or opt-in hardware e2e (1). This
 machine has the older Tone Studio, not the Gen 3 sandbox bundle. Historical
 TONEFORGE 934/934 checks and physical 23/23 reads are source evidence, not tests
-executed by this change. See `gen1-validation.md` for final run results.
+executed by the initial implementation. The later Node adapter read-only run and
+its independently checked 72-record trace are separate, retained evidence. See
+`gen1-validation.md` and the hardware report for the distinction.

@@ -15,7 +15,10 @@ Branch: `feat/katana-gen1-support`.
 | Gen 3 installed-BTS sandbox | SKIPPED | 48 tests; Gen 3 UI assets absent |
 | Gen 3 live e2e | SKIPPED | 1 test; hardware/write opt-in not enabled |
 | New Gen 3 mocked/default registration regression | PASS | Included in backend tests |
-| Gen 1 physical reads/writes/reconnect | SKIPPED | No device I/O performed |
+| Gen 1 physical discovery/identity/reads | PASS | Later authorized run at c5ac085: 20 addresses, 23/23 RQ1, matching sentinels; one inquiry, no outgoing DT1 |
+| Gen 1 physical clean disconnect | PASS | Disconnected, unlocked, no cleanup error in retained report |
+| Gen 1 physical write/unplug/reconnect tests | SKIPPED / DISABLED | No write API, patch-save or firmware operations; no physical fault injection |
+| Retained physical evidence verification | PASS | Six original files hashed; independent verifier reproduces 23 reads / 20 addresses and zero writes offline |
 | Historical local evidence verification | PASS | Offline verifier rechecked 23 transactions / 20 addresses / 46 audit records; SHA-256 AE5F5663418DFB1493230CAF6752FFB19B629B9E7F270869A139FA8517725239 |
 | `npm audit --omit=dev` | PASS | Zero reported known vulnerabilities |
 | `git diff --check` | PASS | No whitespace errors |
@@ -24,9 +27,10 @@ Branch: `feat/katana-gen1-support`.
 | Local project preservation | PASS | All 24 recorded source/evidence hashes rechecked unchanged; original untracked Git status preserved |
 | Fork publication | PASS | Authenticated GitHub connector published the requested feature branch; fetched remote and verified identical Git tree |
 
-No skipped tests are counted as successful. No Gen 1 hardware compatibility is
-established by passing mocks or the old TONEFORGE evidence. Tests use only fake
-backends; real native MIDI import/driver operation was not exercised.
+No skipped tests are counted as successful. The automated npm tests use fake
+backends and establish no hardware compatibility themselves. The later explicitly
+authorized run separately exercised real native MIDI read operations on one
+device; it does not qualify writes, other firmware/models or fault recovery.
 
 `musicplayer` started with all project files untracked, no remotes and no tracked
 diff. The new checkout started clean. The 24 consulted source/evidence hashes
@@ -42,6 +46,26 @@ are retained in `gen1-source-manifest.json` for later read-only comparison.
   manifest, validation and unsubmitted PR-description documents.
 
 No existing Gen 3 source module other than the entry-point registration changed.
+
+## Subsequent physical read-only evidence
+
+The [2026-10-23 hardware report](gen1-hardware-readonly-2026-10-23.md) records the
+new adapter run at `c5ac085f1849157e8fcddfdc30e388bf6cf31540`: discovery, family/member
+identity, all 11 operational and 9 explicit-research addresses, 23/23 reads, three
+matching sentinels and clean disconnect. There were 24 native-returned sends
+(one identity inquiry + 23 RQ1), 24 received messages, 72 audit records and zero
+outgoing DT1 or other commands. Write tests stayed disabled. The result is
+limited to one operator-labelled KATANA-50 Gen 1 with unknown firmware.
+
+All six original capture files are retained byte-for-byte with a SHA-256 manifest
+under `docs/evidence/gen1-readonly-2026-10-23/`. The offline-only
+`scripts/Verify-Gen1ReadOnlyEvidence.py` reproduces the captured verifier's result
+without overwriting proof or loading MIDI. Documentation/evidence publication does
+not rerun hardware. Runtime source and permission defaults are unchanged.
+
+The later documentation checks run `npm run build`, `npm test` and the offline
+evidence verifier; the npm result remains 116 PASS / 49 SKIPPED. Physical writes,
+patch save, firmware, unplug/reconnect and Gen 3 physical regression remain skipped.
 
 ## Security review evidence
 

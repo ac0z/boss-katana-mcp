@@ -59,7 +59,11 @@ Describe a tone and the knobs in **BOSS TONE STUDIO** move live, as if you had t
 
 ### Experimental Gen 1 support
 
-KATANA-50 Gen 1 has an isolated, **hardware-unverified** direct MIDI backend.
+KATANA-50 Gen 1 has an isolated, **experimental** direct MIDI backend. Its
+**read-only adapter path was verified on one operator-labelled KATANA-50 Gen 1**
+on 2026-10-23: identity matched, all 20 addresses read successfully in 23
+transactions, start/end sentinels matched and ports closed cleanly. Firmware
+remains unknown; this is not a compatibility claim for other devices/firmware.
 Default startup and the existing Gen 3 tools are unchanged. Set
 `KATANA_BACKEND=gen1` to expose `katana_gen1_*` tools; hardware access is **off by
 default**, including discovery. Status and parameter listing work without a device.
@@ -67,13 +71,17 @@ The optional native dependency is installed by `npm install`.
 
 Twenty evidenced raw fields can be read after explicit hardware opt-in and
 physical-model confirmation. Only temporary Gain raw 95/96 has experimental write
-infrastructure, behind separate write and low-MASTER confirmations. Volume,
-effect, patch-save and firmware writes are blocked. No physical device was used
-to validate this implementation. Gen 3 tone recipes do not apply to Gen 1.
+infrastructure, behind separate write and low-MASTER confirmations. **Write tests
+remain disabled and write support remains hardware-unverified.** The physical
+test sent only one identity inquiry and 23 RQ1, with zero outgoing DT1. Volume,
+effect, patch-save and firmware writes are blocked. Gen 3 tone recipes do not
+apply to Gen 1.
 
 See [architecture and source evidence](docs/gen1-architecture.md),
 [compatibility and opt-ins](docs/gen1-compatibility.md), and
-[test plan](docs/gen1-test-plan.md).
+[test plan](docs/gen1-test-plan.md). The
+[physical read-only report and raw evidence](docs/gen1-hardware-readonly-2026-10-23.md)
+include all values, checksums and an offline evidence verifier.
 
 ### Gen 3 setup
 
