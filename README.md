@@ -57,6 +57,26 @@ Describe a tone and the knobs in **BOSS TONE STUDIO** move live, as if you had t
 
 ## Install
 
+### Experimental Gen 1 support
+
+KATANA-50 Gen 1 has an isolated, **hardware-unverified** direct MIDI backend.
+Default startup and the existing Gen 3 tools are unchanged. Set
+`KATANA_BACKEND=gen1` to expose `katana_gen1_*` tools; hardware access is **off by
+default**, including discovery. Status and parameter listing work without a device.
+The optional native dependency is installed by `npm install`.
+
+Twenty evidenced raw fields can be read after explicit hardware opt-in and
+physical-model confirmation. Only temporary Gain raw 95/96 has experimental write
+infrastructure, behind separate write and low-MASTER confirmations. Volume,
+effect, patch-save and firmware writes are blocked. No physical device was used
+to validate this implementation. Gen 3 tone recipes do not apply to Gen 1.
+
+See [architecture and source evidence](docs/gen1-architecture.md),
+[compatibility and opt-ins](docs/gen1-compatibility.md), and
+[test plan](docs/gen1-test-plan.md).
+
+### Gen 3 setup
+
 **You need:** Windows 10/11 · a KATANA Gen 3 on USB · BOSS TONE STUDIO for KATANA Gen 3 (tested 1.1.0) ·
 Node.js 24+ · Claude Code, Codex CLI or Gemini CLI.
 
