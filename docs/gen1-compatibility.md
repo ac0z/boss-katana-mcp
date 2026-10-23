@@ -1,4 +1,4 @@
-# KATANA-50 Gen 1 compatibility — experimental; read-only verified on one device
+# KATANA-50 Gen 1 compatibility — experimental; limited tone edits verified
 
 Date: 2026-10-23. **The new Node/native adapter's read-only path was exercised
 successfully on one operator-labelled KATANA-50 Gen 1.** Discovery, observed
@@ -10,8 +10,11 @@ sent; no outgoing DT1, patch-save or firmware command was sent. See the
 The earlier TONEFORGE records from 2026-10-20 supplied the protocol facts; the new
 test separately establishes this adapter's read-only behavior for this device and
 session. Firmware remains unknown. Other models/firmware, physical fault recovery
-and writes remain unverified. **Write tests remain disabled**, and startup gates,
-write range and blocked operations have not been changed by this qualification.
+remain unverified. The original read-only qualification did not authorize writes.
+A later operator-approved [metal-tone session](gen1-hardware-metal-2026-10-23.md)
+separately passed 70 RQ1 and nine effective-parameter DT1 writes with readback.
+Only the recorded values on this device/session are hardware-qualified; endpoint
+ranges, other default amp models, effect enabling and audible results are not.
 
 ## Evidence profile
 
@@ -23,7 +26,8 @@ write range and blocked operations have not been changed by this qualification.
 - Roland manufacturer `41`, device `00`, data-message model `00 00 00 33`.
 - RQ1 `11`, DT1 `12`, four-byte address and four-byte 7-bit size.
 - Checksum is `(-sum(address + size_or_data)) mod 128`.
-- Data is unsigned, big-endian in base 128. No inferred units/range/default.
+- Data is unsigned, big-endian in base 128. Only explicitly sourced raw ranges
+  are exposed; panel-to-DSP conversions and physical output levels are not inferred.
 
 These facts are supported by `RolandSysEx.cs:58`, `ParameterCatalog.cs:32`,
 `GAIN_PROTOCOL.md:21` and the raw identity/gain/read-sweep evidence listed in
@@ -56,10 +60,16 @@ as unknown protocol bytes and are not decoded into an invented firmware version.
 | Fx1PhaserDepth | 60 00 02 77 | 1 | Explicit research; algorithm-dependent |
 | SignalChainPattern | 60 00 12 00 | 1 | Explicit research; raw pattern |
 
-`list_params` reports ranges as null because complete ranges are unproven.
-Each read is an individual observation, not a full patch snapshot. No patch-name,
-saved-channel, Booster/Mod algorithm selection, independent on/off control,
-volume-write, NS1-write, save or firmware support is claimed.
+This original 20-field allowlist remains available. The later effective controls
+add `TemporaryAmpType`, `TemporaryBass/Middle/Treble/Presence/Level` and
+`BoosterOn/ModOn/FxOn/DelayOn/ReverbOn`: 31 readable keys overall, observed across
+two separate sessions rather than one atomic snapshot. The original nine research
+reads retain their explicit-research gate.
+
+`list_params` reports source-defined raw bounds for the 14 effective writable
+fields and null for the others. [Write support](gen1-write-support.md) records
+all addresses, default amp codes, numeric limits and source offsets. There is no
+patch-name, saved-channel, Booster/Mod algorithm selection, save or firmware API.
 
 ## Startup and opt-ins
 
@@ -79,7 +89,7 @@ documentation/evidence update performs no additional device operations.
 | --- | --- | --- |
 | KATANA_GEN1_ENABLE_HARDWARE | 1 | Permit MIDI enumeration/open/inquiry/RQ1 |
 | KATANA_GEN1_MODEL_CONFIRMED | 1 | Operator has checked physical KATANA-50 Gen 1 label |
-| KATANA_GEN1_ALLOW_WRITES | 1 | Explicit authorization for experimental temporary gain DT1 |
+| KATANA_GEN1_ALLOW_WRITES | 1 | Explicit authorization for allowlisted effective-parameter DT1 |
 | KATANA_GEN1_LOW_MASTER_CONFIRMED | 1 | Operator has set physical MASTER low |
 
 No tool can change these startup gates. Setting only `KATANA_BACKEND=gen1` opens
@@ -90,19 +100,19 @@ Node 24.14.1 / MIDI 3.8.1 read path passed on this host; other architectures,
 drivers and fault scenarios remain unverified. Keep both write-related flags
 absent throughout read-only qualification.
 
-`katana_gen1_set` accepts only `TemporaryGain` and integer `95` or `96`, requires
-both write gates and a connection, pre-reads that same window, sends at most one
-DT1 and demands a matching readback. It leaves the requested temporary value in
-place after success; it is not the local project's automatic restore experiment.
-On uncertain outcome it locks, reports an error and does not restore/retry.
-`savedToPatch:false` means no patch-save command was sent, not a NVRAM guarantee.
-The raw gain window is high; low physical MASTER is still required. This is an
-experimental infrastructure path, not general gain control or a recommendation
-to enable it. No hardware test is authorized by this document.
+`katana_gen1_set` requires both write gates and a connection, validates the
+source-bounded target and current value, sends at most one DT1 and demands exact
+readback. It leaves the requested effective value in place on success. The
+metal-tone tool defaults to a zero-I/O preview; applying serializes a backed-up,
+LEVEL-reduced sequence and reports partial state on failure. Neither tool retries
+or restores after uncertainty. `savedToPatch:false` means no save command was
+sent, not a NVRAM guarantee. No hardware action is authorized by documentation.
 
-**Volume safety:** all Volume writes, including zero, are rejected. No numeric
-ceiling is invented because the local source proves reads but no safe write
-range or physical loudness relationship. No amplitude control is promised.
+**Volume policy:** all panel `Volume` writes remain rejected. Effective
+`TemporaryLevel` has a source-defined raw 0..100 range, but this application
+permits only 0..10 and the metal recipe defaults to a non-increasing final value
+at most 5. These software limits do not establish physical loudness; low physical
+MASTER is independently required. Physical LEVEL 28→0→5 was readback-verified.
 
 The Gen 3 `katana-tone` skill and its tone recipes use a different parameter
 contract and should not be applied to Gen 1. Gen 1 does not launch BTS or use CDP.

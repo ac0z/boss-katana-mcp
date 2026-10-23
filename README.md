@@ -69,13 +69,20 @@ Default startup and the existing Gen 3 tools are unchanged. Set
 default**, including discovery. Status and parameter listing work without a device.
 The optional native dependency is installed by `npm install`.
 
-Twenty evidenced raw fields can be read after explicit hardware opt-in and
-physical-model confirmation. Only temporary Gain raw 95/96 has experimental write
-infrastructure, behind separate write and low-MASTER confirmations. **Write tests
-remain disabled and write support remains hardware-unverified.** The physical
-test sent only one identity inquiry and 23 RQ1, with zero outgoing DT1. Volume,
-effect, patch-save and firmware writes are blocked. Gen 3 tone recipes do not
-apply to Gen 1.
+The original 20 reads are retained; 11 additional source-backed effective controls
+were read during a later **explicitly approved metal-tone application on the same
+device**. That session passed identity, 70 RQ1, nine temporary DT1 writes with
+readback, and clean disconnect. It did not save a patch or alter firmware.
+Audible quality, other firmware and physical fault recovery remain unverified.
+
+`katana_gen1_apply_tone {"name":"metal"}` previews with **zero I/O** by default.
+Applying requires `dryRun:false`, a connection and both write/low-MASTER startup
+opt-ins. Bounded effective amp/Gain/EQ/effect-toggle/NS1 controls are also available
+through `katana_gen1_set`. Temporary LEVEL is capped at 10; the metal recipe ends
+at `min(previous LEVEL,5)`. Keep physical MASTER low. All panel/system, patch-save
+and firmware writes remain blocked; Gen 3 tone recipes do not apply to Gen 1.
+See [write support and its source evidence](docs/gen1-write-support.md) and the
+[approved physical session report](docs/gen1-hardware-metal-2026-10-23.md).
 
 See [architecture and source evidence](docs/gen1-architecture.md),
 [compatibility and opt-ins](docs/gen1-compatibility.md), and

@@ -1,5 +1,11 @@
 # Experimental KATANA-50 Gen 1 architecture
 
+Current extension: [bounded temporary writes and a metal-tone plan](gen1-write-support.md)
+add one Gen 1 tool and `tones.ts` without changing any Gen 3 implementation.
+The source-comparison table below records the original integration decisions;
+its earlier gain-pair/NS1 write restrictions are superseded by the explicitly
+sourced effective-control extension. Defaults remain hardware/write-disabled.
+
 ## Integration decision
 
 The existing Gen 3 contract is a BTS UI contract: `src/bts.ts:4` exposes PID

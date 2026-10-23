@@ -4,6 +4,44 @@ Date: 2026-10-23 (Europe/Istanbul). Windows, Node v24.14.1, Vitest v4.1.12.
 Base: upstream/main `56b6d13786be00e31db650c3923bf047726f5ad9`.
 Branch: `feat/katana-gen1-support`.
 
+## Later approved temporary-tone extension
+
+The table and security scan below describe the earlier read-only contribution.
+For the current extension, validated on 2026-10-23 after explicit write approval:
+
+| Check | Result | Evidence / limits |
+| --- | --- | --- |
+| `npm run build` | PASS | Current write/tone source compiled |
+| `npm test` | PASS / SKIPPED | 138 passed; 49 skipped |
+| `npm run test:gen1` | PASS | 117 offline tests across four files |
+| Original runnable Gen 3 tests | PASS | 21 tests; original runtime modules unchanged |
+| Gen 3 installed-BTS / physical e2e | SKIPPED | 48 asset-dependent tests; 1 live e2e |
+| Static BTS tone-source verifier | PASS | Seven exact id/min/max/step definitions and map entries, pinned package hashes |
+| Approved physical metal application | PASS | One inquiry, 70 RQ1, nine DT1, 71 RX; exact targets and LEVEL 28→0→5; clean disconnect |
+| Independent metal-evidence verifier | PASS | Raw frames, checksums, exact approved sequence, originals and MCP responses agree |
+| Four offline tamper variants | PASS | Corrupt checksum, save address, wrong LEVEL and missing row rejected |
+| Physical endpoint/fault/other-firmware tests | SKIPPED | No range sweep or fault injection authorized |
+| Audible quality and persistence | UNVERIFIED | No listening/audio measurement or power cycle |
+| Patch save / firmware | SKIPPED / unavailable | No API or outgoing command |
+| `npm audit --omit=dev` | PASS | Zero reported vulnerabilities; no new dependency |
+| Source license/preservation | PASS within scope | Independent implementation/facts only; all 24 original source/evidence hashes unchanged |
+| Current manual safety/security diff review | PASS within static scope | Canonical address/value allowlist, immutable plans, gates off by default, dry-run default, LEVEL ceiling, one serialized operation, bounded sends, lock on uncertainty; manual harness requires explicit flags and exact frame guard |
+
+The earlier Codex Security scan did **not** cover these later write/tone changes;
+it is not presented as a current scan result. Native-driver internals, acoustic
+output, hostile USB devices and firmware-wide behavior are not audited here.
+The successful current manual session is documented in
+[the physical report](gen1-hardware-metal-2026-10-23.md); the source extension and
+licensing limits are in [write support](gen1-write-support.md). No additional
+physical tests were run after the approved tone application.
+
+Current added files: `src/gen1/tones.ts`, `test/gen1-tone.test.ts`, two offline
+inspection/verifier scripts, two manual runner/guard files, source facts,
+physical report, raw evidence and user command journal. Changes are confined to
+Gen 1 controls/adapter/tools, Gen 1/backend tests, npm test selection and docs.
+
+## Earlier read-only implementation validation
+
 | Check | Result | Evidence / limits |
 | --- | --- | --- |
 | Baseline build | PASS | Before source changes |
